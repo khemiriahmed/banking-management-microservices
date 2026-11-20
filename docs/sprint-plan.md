@@ -46,7 +46,7 @@ Objectif : un sprint traité par jour ouvré. Les sprints longs du cahier des ch
 - [x] 1.5 — Route de test `demo-service` via `lb://DEMO-SERVICE`.
 - [x] 1.6 — Démarrage complet et vérification des endpoints (voir [ports et services](ports-and-services.md)).
 
-Commits atomiques : un commit par tâche sur `feature/sprint-1-foundations`, puis merge dans `develop`.
+Commits atomiques : un commit par tâche sur la branche de sprint dédiée, puis merge `--no-ff` dans `develop`. La branche du sprint est conservée (convention : `sprint/01-foundations`).
 
 ## Règle de passage au sprint suivant
 
