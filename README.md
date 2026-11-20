@@ -69,17 +69,17 @@ Package Java de base : `com.ahmedkh.banking` (ex. `com.ahmedkh.banking.account`)
 
 ## Git — travail quotidien
 
-Branches : `main` (releases), `develop` (intégration), `feature/sprint-XX-slug`, `fix/...`, `docs/...`, `chore/...`.
+Branches : `main` (releases), `develop` (intégration), **une branche conservée par sprint** `sprint/XX-slug`, plus `feature/...`, `fix/...`, `docs/...`, `chore/...`.
 
 ```powershell
 git switch develop
 git pull origin develop
-git switch -c feature/sprint-01-foundations
+git switch -c sprint/02-auth
 # une tâche = un commit
-git commit -m "feat(gateway): add test route"
+git commit -m "feat(auth): add register endpoint"
 git switch develop
-git merge --no-ff feature/sprint-01-foundations -m "Merge feature/sprint-01-foundations into develop"
-git branch -d feature/sprint-01-foundations
+git merge --no-ff sprint/02-auth -m "Merge sprint/02-auth into develop"
+git push origin develop sprint/02-auth
 ```
 
 Messages : `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `build`, `ci`. Détail complet : [docs/git-workflow.md](docs/git-workflow.md).
