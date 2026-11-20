@@ -1,0 +1,11 @@
+app:
+  default-timezone: UTC
+
+eureka:
+  client:
+    registry-fetch-interval-seconds: 5
+
+management:
+  endpoint:
+    health:
+      show-details: never
