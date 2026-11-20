@@ -1,1 +1,34 @@
-docs
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+
+# Java / Maven
+target/
+.mvn/timing.properties
+
+# Node / Angular
+node_modules/
+dist/
+.angular/
+npm-debug.log*
+yarn-error.log*
+
+# Tests / couverture
+coverage/
+
+# Logs
+logs/
+*.log
+
+# Secrets et environnements locaux
+.env
+.env.*
+!.env.example
+*.pem
+*.key
