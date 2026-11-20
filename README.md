@@ -50,6 +50,7 @@ Règles fortes : chaque service a sa propre base, le Gateway n'est pas une couch
 │   ├── config-server/
 │   ├── discovery-server/
 │   ├── api-gateway/
+│   ├── demo-service/             # service temporaire de test du Sprint 1
 │   ├── auth-service/
 │   ├── user-service/
 │   ├── account-service/
@@ -85,15 +86,17 @@ Messages : `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `build`, `ci`. D�
 
 ## Prérequis (à valider avec la tâche 0.1)
 
-- **JDK 17** : `java -version` doit afficher 17 (attention : une JDK 26 est installée par défaut sur la machine).
-- **Maven 3.9+** : `mvn -version`.
-- **Node 18.x** : Angular 15 ne prend pas en charge Node 24 installé actuellement.
+- **JDK 17** : `java -version` doit afficher 17 (attention : une JDK 26 reste installée par défaut sur la machine ; un toolchain Temurin 17 a été utilisé pour les builds).
+- **Maven 3.9+** : `mvn -version`. Chaque service contient aussi son Maven Wrapper (`mvnw` / `mvnw.cmd`) configuré sur 3.9.16.
+- **Node 18.x** : Angular 15 ne prend pas en charge Node 24 installé actuellement (à corriger avant le Sprint 9).
 - **Docker** : `docker --version`.
 - Sur PowerShell Windows, si `npm` est bloqué par la politique d'exécution, utiliser `npm.cmd` ou `cmd /c npm`.
 
+Lancer les fondations Spring Cloud : voir [docs/ports-and-services.md](docs/ports-and-services.md).
+
 ## Sprints
 
-Feuille de route détaillée : [docs/sprint-plan.md](docs/sprint-plan.md). Statut actuel : **Sprint 0 en cours**.
+Feuille de route détaillée : [docs/sprint-plan.md](docs/sprint-plan.md). Statut actuel : **Sprint 1 terminé, Sprint 2 à démarrer**.
 
 ## Sécurité et qualité
 
@@ -102,4 +105,4 @@ Feuille de route détaillée : [docs/sprint-plan.md](docs/sprint-plan.md). Statu
 - Aucune base partagée entre services, aucun secret commité, aucun token dans les logs.
 - `BigDecimal` uniquement pour l'argent, Saga + idempotence pour les virements.
 
-Voir aussi : [architecture](docs/architecture-overview.md) · [cahier des charges PDF](docs/Cahier_des_charges_Banking_Microservices_AhmedKH_v2_Sprints_Detailles.pdf).
+Voir aussi : [architecture](docs/architecture-overview.md) · [ports et services](docs/ports-and-services.md) · [cahier des charges PDF](docs/Cahier_des_charges_Banking_Microservices_AhmedKH_v2_Sprints_Detailles.pdf).
