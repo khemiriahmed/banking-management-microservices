@@ -74,12 +74,12 @@ Branches : `main` (releases), `develop` (intégration), **une branche conservée
 ```powershell
 git switch develop
 git pull origin develop
-git switch -c sprint/02-auth
+git switch -c sprint/03-user-service
 # une tâche = un commit
-git commit -m "feat(auth): add register endpoint"
+git commit -m "feat(user): expose GET /users/me"
 git switch develop
-git merge --no-ff sprint/02-auth -m "Merge sprint/02-auth into develop"
-git push origin develop sprint/02-auth
+git merge --no-ff sprint/03-user-service -m "Merge sprint/03-user-service into develop"
+git push origin develop sprint/03-user-service
 ```
 
 Messages : `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `build`, `ci`. Détail complet : [docs/git-workflow.md](docs/git-workflow.md).
@@ -96,7 +96,7 @@ Lancer toute la plateforme avec Docker (mode retenu) :
 
 ```powershell
 copy infrastructure\.env.example infrastructure\.env
-# renseigner AUTH_DB_PASSWORD et JWT_SECRET
+# renseigner AUTH_DB_PASSWORD, USER_DB_PASSWORD et JWT_SECRET
 docker compose -f infrastructure/docker-compose.yml --env-file infrastructure/.env up -d --build
 ```
 
@@ -104,7 +104,7 @@ Détails des services et vérifications : [docs/ports-and-services.md](docs/port
 
 ## Sprints
 
-Feuille de route détaillée : [docs/sprint-plan.md](docs/sprint-plan.md). Statut actuel : **Sprint 2 terminé, Sprint 3 à démarrer**.
+Feuille de route détaillée : [docs/sprint-plan.md](docs/sprint-plan.md). Statut actuel : **Sprint 3 terminé, Sprint 4 à démarrer**.
 
 ## Sécurité et qualité
 
@@ -113,4 +113,4 @@ Feuille de route détaillée : [docs/sprint-plan.md](docs/sprint-plan.md). Statu
 - Aucune base partagée entre services, aucun secret commité, aucun token dans les logs.
 - `BigDecimal` uniquement pour l'argent, Saga + idempotence pour les virements.
 
-Voir aussi : [architecture](docs/architecture-overview.md) · [ports et services](docs/ports-and-services.md) · [auth service](docs/auth-service.md) · [cahier des charges PDF](docs/Cahier_des_charges_Banking_Microservices_AhmedKH_v2_Sprints_Detailles.pdf).
+Voir aussi : [architecture](docs/architecture-overview.md) · [ports et services](docs/ports-and-services.md) · [auth service](docs/auth-service.md) · [user service](docs/user-service.md) · [cahier des charges PDF](docs/Cahier_des_charges_Banking_Microservices_AhmedKH_v2_Sprints_Detailles.pdf).
