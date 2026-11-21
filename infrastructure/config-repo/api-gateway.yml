@@ -6,6 +6,10 @@ spring:
           discovery:
             enabled: true
           routes:
+            - id: auth-service
+              uri: lb://AUTH-SERVICE
+              predicates:
+                - Path=/auth/**
             - id: demo-service
               uri: lb://DEMO-SERVICE
               predicates:

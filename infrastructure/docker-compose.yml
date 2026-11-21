@@ -1,0 +1,111 @@
+name: banking-microservices
+
+services:
+  postgres-auth:
+    image: postgres:16-alpine
+    container_name: banking-postgres-auth
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-auth_db}
+      POSTGRES_USER: ${POSTGRES_USER:-auth_user}
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD:?AUTH_DB_PASSWORD is required}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-auth-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-auth_user} -d ${POSTGRES_DB:-auth_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  config-server:
+    build: ../services/config-server
+    container_name: banking-config-server
+    ports:
+      - "8888:8888"
+    environment:
+      CONFIG_REPO_LOCATION: /config-repo
+    volumes:
+      - ./config-repo:/config-repo:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:8888/actuator/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  discovery-server:
+    build: ../services/discovery-server
+    container_name: banking-discovery-server
+    ports:
+      - "8761:8761"
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+    depends_on:
+      config-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:8761/actuator/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  api-gateway:
+    build: ../services/api-gateway
+    container_name: banking-api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_URI: http://discovery-server:8761/eureka/
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:8080/actuator/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  demo-service:
+    build: ../services/demo-service
+    container_name: banking-demo-service
+    ports:
+      - "8081:8081"
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_URI: http://discovery-server:8761/eureka/
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+
+  auth-service:
+    build: ../services/auth-service
+    container_name: banking-auth-service
+    ports:
+      - "8082:8082"
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_URI: http://discovery-server:8761/eureka/
+      AUTH_DB_URL: jdbc:postgresql://postgres-auth:5432/${POSTGRES_DB:-auth_db}
+      AUTH_DB_USER: ${POSTGRES_USER:-auth_user}
+      AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD:?AUTH_DB_PASSWORD is required}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      postgres-auth:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:8082/actuator/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+volumes:
+  postgres-auth-data:

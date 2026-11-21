@@ -6,7 +6,7 @@ Objectif : un sprint traité par jour ouvré. Les sprints longs du cahier des ch
 | --- | --- | --- | --- | --- |
 | J1 | 0 — Préparation | Outils, dépôt, structure, conventions Git | — | Terminé |
 | J2 | 1 — Fondations Spring Cloud | Config Server + Eureka + Gateway | S0 | Terminé |
-| J3 | 2 — Auth | Inscription, login, JWT via Gateway | S1 | À faire |
+| J3 | 2 — Auth | Inscription, login, JWT via Gateway | S1 | Terminé |
 | J4 | 3 — Users | Profil client sécurisé, rôles | S2 | À faire |
 | J5 | 4 — Accounts | Comptes, soldes `BigDecimal`, statuts | S3 | À faire |
 | J6 | 5 — Beneficiaries | CRUD bénéficiaires isolés par client | S4 | À faire |
@@ -14,7 +14,7 @@ Objectif : un sprint traité par jour ouvré. Les sprints longs du cahier des ch
 | J9 | 7 — Transactions | Historique paginé et sécurisé | S6 | À faire |
 | J10 | 8 — Events | RabbitMQ, notifications, audit | S6-S7 | À faire |
 | J11-12 | 9 — Angular | Parcours CLIENT et ADMIN complets | APIs stables | À faire |
-| J13 | 10 — Docker | `docker compose up --build` | S9 | À faire |
+| J13 | 10 — Docker | `docker compose up --build` | S9 | Anticipé partiellement en S2 |
 | J14 | 11 — CI/CD | GitHub Actions, OpenAPI, README final | S10 | À faire |
 | J15 | 12 — AWS | Démo sécurisée, coûts documentés | S11 | À faire |
 
@@ -47,6 +47,19 @@ Objectif : un sprint traité par jour ouvré. Les sprints longs du cahier des ch
 - [x] 1.6 — Démarrage complet et vérification des endpoints (voir [ports et services](ports-and-services.md)).
 
 Commits atomiques : un commit par tâche sur la branche de sprint dédiée, puis merge `--no-ff` dans `develop`. La branche du sprint est conservée (convention : `sprint/01-foundations`).
+
+## Détail du Sprint 2 (terminé)
+
+- [x] 2.1 — `auth-service` : Spring Security, JPA, Flyway, PostgreSQL, JJWT, Maven Wrapper, Dockerfile.
+- [x] 2.2 — Migration `V1__create_auth_tables.sql` : `roles`, `user_credentials`, `user_roles`, seeding `CLIENT`/`ADMIN`.
+- [x] 2.3 — Inscription : email normalisé et unique, BCrypt, rôle `CLIENT`, réponse sans hash.
+- [x] 2.4 — Login : vérification BCrypt, JWT HS256 signé (`sub`, `email`, `roles`, `exp`), réponse `Bearer`.
+- [x] 2.5 — Filtre JWT stateless, gestion d'erreurs JSON `400/401/403/409/500`, endpoint `/auth/me`.
+- [x] 2.6 — Route Gateway `/auth/**` vers `lb://AUTH-SERVICE` et configuration externe par variables d'environnement.
+- [x] 2.7 — Tests unitaires + test d'intégration H2/Flyway : 11 tests verts.
+- [x] 2.8 — Anticipation Docker : `infrastructure/docker-compose.yml`, 6 conteneurs, validation runtime complète (voir [auth-service.md](auth-service.md)).
+
+Branche dédiée : `sprint/02-auth`, conservée après merge dans `develop`.
 
 ## Règle de passage au sprint suivant
 
