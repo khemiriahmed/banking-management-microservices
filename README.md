@@ -61,7 +61,7 @@ Règles fortes : chaque service a sa propre base, le Gateway n'est pas une couch
 ├── infrastructure/           # Docker, AWS, scripts
 ├── docs/                     # cahier des charges, diagrammes, API, guides
 ├── .github/workflows/        # CI GitHub Actions
-├── docker-compose.yml        # Sprint 10
+├── infrastructure/docker-compose.yml  # anticipé en Sprint 2
 └── README.md
 ```
 
@@ -92,11 +92,19 @@ Messages : `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `build`, `ci`. D�
 - **Docker** : `docker --version`.
 - Sur PowerShell Windows, si `npm` est bloqué par la politique d'exécution, utiliser `npm.cmd` ou `cmd /c npm`.
 
-Lancer les fondations Spring Cloud : voir [docs/ports-and-services.md](docs/ports-and-services.md).
+Lancer toute la plateforme avec Docker (mode retenu) :
+
+```powershell
+copy infrastructure\.env.example infrastructure\.env
+# renseigner AUTH_DB_PASSWORD et JWT_SECRET
+docker compose -f infrastructure/docker-compose.yml --env-file infrastructure/.env up -d --build
+```
+
+Détails des services et vérifications : [docs/ports-and-services.md](docs/ports-and-services.md).
 
 ## Sprints
 
-Feuille de route détaillée : [docs/sprint-plan.md](docs/sprint-plan.md). Statut actuel : **Sprint 1 terminé, Sprint 2 à démarrer**.
+Feuille de route détaillée : [docs/sprint-plan.md](docs/sprint-plan.md). Statut actuel : **Sprint 2 terminé, Sprint 3 à démarrer**.
 
 ## Sécurité et qualité
 
@@ -105,4 +113,4 @@ Feuille de route détaillée : [docs/sprint-plan.md](docs/sprint-plan.md). Statu
 - Aucune base partagée entre services, aucun secret commité, aucun token dans les logs.
 - `BigDecimal` uniquement pour l'argent, Saga + idempotence pour les virements.
 
-Voir aussi : [architecture](docs/architecture-overview.md) · [ports et services](docs/ports-and-services.md) · [cahier des charges PDF](docs/Cahier_des_charges_Banking_Microservices_AhmedKH_v2_Sprints_Detailles.pdf).
+Voir aussi : [architecture](docs/architecture-overview.md) · [ports et services](docs/ports-and-services.md) · [auth service](docs/auth-service.md) · [cahier des charges PDF](docs/Cahier_des_charges_Banking_Microservices_AhmedKH_v2_Sprints_Detailles.pdf).
