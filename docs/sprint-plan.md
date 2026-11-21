@@ -7,14 +7,14 @@ Objectif : un sprint traité par jour ouvré. Les sprints longs du cahier des ch
 | J1 | 0 — Préparation | Outils, dépôt, structure, conventions Git | — | Terminé |
 | J2 | 1 — Fondations Spring Cloud | Config Server + Eureka + Gateway | S0 | Terminé |
 | J3 | 2 — Auth | Inscription, login, JWT via Gateway | S1 | Terminé |
-| J4 | 3 — Users | Profil client sécurisé, rôles | S2 | À faire |
+| J4 | 3 — Users | Profil client sécurisé, rôles | S2 | Terminé |
 | J5 | 4 — Accounts | Comptes, soldes `BigDecimal`, statuts | S3 | À faire |
 | J6 | 5 — Beneficiaries | CRUD bénéficiaires isolés par client | S4 | À faire |
 | J7-8 | 6 — Transfers | Saga, compensation, idempotence | S4-S5 | À faire |
 | J9 | 7 — Transactions | Historique paginé et sécurisé | S6 | À faire |
 | J10 | 8 — Events | RabbitMQ, notifications, audit | S6-S7 | À faire |
 | J11-12 | 9 — Angular | Parcours CLIENT et ADMIN complets | APIs stables | À faire |
-| J13 | 10 — Docker | `docker compose up --build` | S9 | Anticipé partiellement en S2 |
+| J13 | 10 — Docker | `docker compose up --build` | S9 | Anticipé en S2/S3 |
 | J14 | 11 — CI/CD | GitHub Actions, OpenAPI, README final | S10 | À faire |
 | J15 | 12 — AWS | Démo sécurisée, coûts documentés | S11 | À faire |
 
@@ -60,6 +60,19 @@ Commits atomiques : un commit par tâche sur la branche de sprint dédiée, puis
 - [x] 2.8 — Anticipation Docker : `infrastructure/docker-compose.yml`, 6 conteneurs, validation runtime complète (voir [auth-service.md](auth-service.md)).
 
 Branche dédiée : `sprint/02-auth`, conservée après merge dans `develop`.
+
+## Détail du Sprint 3 (terminé)
+
+- [x] 3.1 — `user-service` : Spring Security, JPA, Flyway, PostgreSQL, JWT local, Maven Wrapper, Dockerfile.
+- [x] 3.2 — Migration `V1__create_customer_profiles.sql` : `customer_profiles`, `auth_user_id` unique, aucune FK inter-bases.
+- [x] 3.3 — Provisioning automatique du profil depuis `sub`/`email` du JWT au premier appel `/users/me`.
+- [x] 3.4 — Endpoints `GET/PUT /users/me`, `GET /admin/users`, `GET /admin/users/{authUserId}` avec `authUserId` comme identifiant admin.
+- [x] 3.5 — Validation JWT locale avec le même `JWT_SECRET` que `auth-service` ; rôles bruts comparés via `hasAuthority("ADMIN")`.
+- [x] 3.6 — Isolation garantie : `X-User-Id` forgé ignoré, `authUserId` immuable, routes admin réservées à `ADMIN`.
+- [x] 3.7 — Routes Gateway `/users/**` et `/admin/**` vers `lb://USER-SERVICE`, conteneurs `postgres-user` et `user-service`.
+- [x] 3.8 — Tests unitaires + intégration H2/Flyway : 13 tests verts ; validation Docker complète (voir [user-service.md](user-service.md)).
+
+Branche dédiée : `sprint/03-user-service`, conservée après merge dans `develop`.
 
 ## Règle de passage au sprint suivant
 
