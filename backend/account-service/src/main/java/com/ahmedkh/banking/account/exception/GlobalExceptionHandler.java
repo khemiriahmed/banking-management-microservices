@@ -2,6 +2,7 @@ package com.ahmedkh.banking.account.exception;
 
 import com.ahmedkh.banking.account.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,9 +38,9 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, "Malformed request", request, Map.of());
     }
 
-    @ExceptionHandler(AccountNotFoundException.class)
+    @ExceptionHandler({AccountNotFoundException.class, BeneficiaryNotFoundException.class})
     public ResponseEntity<ErrorResponse> handleNotFound(
-            AccountNotFoundException exception,
+            RuntimeException exception,
             HttpServletRequest request
     ) {
         return build(HttpStatus.NOT_FOUND, exception.getMessage(), request, Map.of());
@@ -49,13 +50,27 @@ public class GlobalExceptionHandler {
             InsufficientBalanceException.class,
             InvalidAccountStateException.class,
             CurrencyMismatchException.class,
-            OptimisticLockingFailureException.class
+            OptimisticLockingFailureException.class,
+            BeneficiaryAlreadyExistsException.class
     })
     public ResponseEntity<ErrorResponse> handleConflict(RuntimeException exception, HttpServletRequest request) {
         String message = exception instanceof OptimisticLockingFailureException
                 ? "Concurrent update detected"
                 : exception.getMessage();
         return build(HttpStatus.CONFLICT, message, request, Map.of());
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataConflict(HttpServletRequest request) {
+        return build(HttpStatus.CONFLICT, "Resource conflicts with existing data", request, Map.of());
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(
+            IllegalArgumentException exception,
+            HttpServletRequest request
+    ) {
+        return build(HttpStatus.BAD_REQUEST, exception.getMessage(), request, Map.of());
     }
 
     @ExceptionHandler(AccessDeniedException.class)
