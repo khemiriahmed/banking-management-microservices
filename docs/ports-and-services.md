@@ -1,4 +1,4 @@
-# Ports et services — Sprint 4
+# Ports et services — Sprint 4 + frontend
 
 ## Versions retenues
 
@@ -10,6 +10,9 @@
 | Maven | 3.9.16 (Maven Wrapper fourni par service) |
 | JJWT | 0.13.0 |
 | PostgreSQL | 16-alpine (containers `banking-postgres-auth`, `banking-postgres-user`, `banking-postgres-account`) |
+| Angular | 15.2.10 |
+| Node (build frontend) | 18-alpine |
+| Nginx | 1.27-alpine |
 
 ## Services locaux
 
@@ -22,6 +25,7 @@
 | Auth Service | `auth-service` | 8082 | `http://localhost:8082` | Inscription, login BCrypt, JWT HS256, `/auth/me` |
 | User Service | `user-service` | 8083 | `http://localhost:8083` | Profils clients, endpoints `/users/me` et `/admin/users` |
 | Account Service | `account-service` | 8084 | `http://localhost:8084` | Comptes, soldes, statuts, opérations internes `/internal/**` |
+| Frontend | `frontend` | 4200 | `http://localhost:4200` | Application Angular 15 servie par Nginx, API proxifiée vers `api-gateway:8080` |
 | PostgreSQL Auth | `postgres-auth` | 5432 | `jdbc:postgresql://localhost:5432/auth_db` | Base logique de l'authentification |
 | PostgreSQL User | `postgres-user` | 5433 | `jdbc:postgresql://localhost:5433/user_db` | Base logique des profils clients |
 | PostgreSQL Account | `postgres-account` | 5434 | `jdbc:postgresql://localhost:5434/account_db` | Base logique des comptes |
@@ -57,6 +61,7 @@ docker compose -f infrastructure/docker-compose.yml --env-file infrastructure/.e
 | Flyway User | `docker exec banking-postgres-user psql -U user_user -d user_db -c '\dt'` | `customer_profiles`, `flyway_schema_history` |
 | Flyway Account | `docker exec banking-postgres-account psql -U account_user -d account_db -c '\dt'` | `bank_accounts`, `flyway_schema_history` |
 | Routes Gateway | `GET http://localhost:8080/actuator/gateway/routes` | `auth-service,demo-service,account-service,user-service` |
+| Frontend | `GET http://localhost:4200/` | `200`, page Angular, health `UP` |
 | Eureka | `GET http://localhost:8761/eureka/apps` | `API-GATEWAY,DEMO-SERVICE,AUTH-SERVICE,USER-SERVICE,ACCOUNT-SERVICE` |
 | Inscription | `POST http://localhost:8080/auth/register` | `201`, rôle `CLIENT` |
 | Login | `POST http://localhost:8080/auth/login` | `200`, JWT `Bearer` |

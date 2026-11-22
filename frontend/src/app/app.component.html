@@ -1,0 +1,61 @@
+<main class="shell">
+  <header class="hero">
+    <h1>Banking Management</h1>
+    <p>Tableau de bord des comptes bancaires</p>
+  </header>
+
+  <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+  <section class="card" *ngIf="!authenticated">
+    <h2>Connexion</h2>
+    <form (ngSubmit)="login()">
+      <label>
+        Email
+        <input name="email" type="email" [(ngModel)]="email" required autocomplete="username">
+      </label>
+      <label>
+        Mot de passe
+        <input name="password" type="password" [(ngModel)]="password" required autocomplete="current-password">
+      </label>
+      <button type="submit" [disabled]="isLoading">
+        {{ isLoading ? 'Connexion...' : 'Se connecter' }}
+      </button>
+    </form>
+  </section>
+
+  <section class="card" *ngIf="authenticated">
+    <div class="toolbar">
+      <h2>Mes comptes</h2>
+      <div>
+        <button type="button" (click)="loadAccounts()" [disabled]="isLoading">Rafraichir</button>
+        <button type="button" class="secondary" (click)="logout()">Deconnexion</button>
+      </div>
+    </div>
+
+    <table *ngIf="accounts.length > 0">
+      <thead>
+        <tr>
+          <th>Numero</th>
+          <th>Type</th>
+          <th>Statut</th>
+          <th>Devise</th>
+          <th>Solde</th>
+          <th>Cree le</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let account of accounts">
+          <td>{{ account.accountNumberMasked }}</td>
+          <td>{{ account.accountType }}</td>
+          <td>{{ account.status }}</td>
+          <td>{{ account.currency }}</td>
+          <td>{{ account.balance }} {{ account.currency }}</td>
+          <td>{{ account.createdAt }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p *ngIf="!isLoading && accounts.length === 0">Aucun compte disponible.</p>
+    <p *ngIf="isLoading">Chargement...</p>
+  </section>
+</main>

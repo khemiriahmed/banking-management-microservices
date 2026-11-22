@@ -59,7 +59,7 @@ Codes d'erreur JSON : `400` validation/montant invalide, `401` JWT ou token inte
 ## Tests
 
 ```powershell
-$env:JAVA_HOME='C:\Users\Ahmed\AppData\Local\Temp\opencode\toolchain\jdk-17.0.21+9'; $env:PATH="$env:JAVA_HOME\bin;C:\Users\Ahmed\AppData\Local\Temp\opencode\toolchain\apache-maven-3.9.16\bin;$env:PATH"; mvn -B -f services/account-service/pom.xml test
+$env:JAVA_HOME='C:\Users\Ahmed\AppData\Local\Temp\opencode\toolchain\jdk-17.0.21+9'; $env:PATH="$env:JAVA_HOME\bin;C:\Users\Ahmed\AppData\Local\Temp\opencode\toolchain\apache-maven-3.9.16\bin;$env:PATH"; mvn -B -f backend/account-service/pom.xml test
 ```
 
 Couverture : `JwtTokenVerifierTest` (claims, expiration, subject invalide), `AccountServiceTest` (règles de solde, réservation, débit, crédit, libération, précision), `AccountServiceIntegrationTest` (isolation des clients, rôles, statut suspendu, token interne, BigDecimal et concurrence, H2 + Flyway). 16 tests verts.

@@ -88,6 +88,15 @@ Branche dédiée : `sprint/03-user-service`, conservée après merge dans `devel
 
 Branche dédiée : `sprint/04-account-service`, conservée après merge dans `develop`.
 
+## Travaux transverses (structure et conteneurisation)
+
+- [x] Microservices déplacés de `services/` vers `backend/` ; chemins du Compose et de la documentation mis à jour.
+- [x] Application Angular 15 créée dans `frontend/` : connexion JWT, intercepteur `Authorization`, tableau de bord des comptes, 3 tests verts.
+- [x] `frontend/Dockerfile` (build `node:18-alpine`, service `nginx:1.27-alpine`) et `frontend/nginx.conf` (proxy API vers `api-gateway:8080`).
+- [x] Service `frontend` ajouté au Compose sur le port hôte `4200` ; plateforme validée avec 11 conteneurs et healthchecks `UP`.
+
+Branche dédiée : `chore/backend-frontend-docker`.
+
 ## Règle de passage au sprint suivant
 
 Aucun sprint suivant ne démarre tant que les critères de validation du sprint courant ne sont pas tous cochés et que le merge dans `develop` n'est pas effectué.
