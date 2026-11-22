@@ -45,8 +45,7 @@ Règles fortes : chaque service a sa propre base, le Gateway n'est pas une couch
 
 ```text
 .
-├── frontend/                 # Angular 15
-├── services/
+├── backend/                  # microservices Spring Boot
 │   ├── config-server/
 │   ├── discovery-server/
 │   ├── api-gateway/
@@ -58,6 +57,7 @@ Règles fortes : chaque service a sa propre base, le Gateway n'est pas une couch
 │   ├── transaction-service/
 │   ├── notification-service/
 │   └── audit-service/
+├── frontend/                 # Angular 15 + nginx
 ├── infrastructure/           # Docker, AWS, scripts
 ├── docs/                     # cahier des charges, diagrammes, API, guides
 ├── .github/workflows/        # CI GitHub Actions
@@ -88,7 +88,7 @@ Messages : `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `build`, `ci`. D�
 
 - **JDK 17** : `java -version` doit afficher 17 (attention : une JDK 26 reste installée par défaut sur la machine ; un toolchain Temurin 17 a été utilisé pour les builds).
 - **Maven 3.9+** : `mvn -version`. Chaque service contient aussi son Maven Wrapper (`mvnw` / `mvnw.cmd`) configuré sur 3.9.16.
-- **Node 18.x** : Angular 15 ne prend pas en charge Node 24 installé actuellement (à corriger avant le Sprint 9).
+- **Node 18.x** : Angular 15 ne prend pas en charge Node 24 installé actuellement ; le build frontend est donc exécuté dans `node:18-alpine` via Docker.
 - **Docker** : `docker --version`.
 - Sur PowerShell Windows, si `npm` est bloqué par la politique d'exécution, utiliser `npm.cmd` ou `cmd /c npm`.
 
@@ -99,6 +99,8 @@ copy infrastructure\.env.example infrastructure\.env
 # renseigner AUTH_DB_PASSWORD, USER_DB_PASSWORD, ACCOUNT_DB_PASSWORD, JWT_SECRET et INTERNAL_SERVICE_TOKEN
 docker compose -f infrastructure/docker-compose.yml --env-file infrastructure/.env up -d --build
 ```
+
+Le frontend est ensuite disponible sur `http://localhost:4200` et l'API Gateway sur `http://localhost:8080`.
 
 Détails des services et vérifications : [docs/ports-and-services.md](docs/ports-and-services.md).
 

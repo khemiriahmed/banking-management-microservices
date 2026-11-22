@@ -37,7 +37,7 @@ Codes d'erreur JSON : `400` validation, `401` identifiants/JWT invalides, `409` 
 ## Tests
 
 ```powershell
-.\services\auth-service\mvnw.cmd -f services/auth-service/pom.xml test
+.\backend\auth-service\mvnw.cmd -f backend/auth-service/pom.xml test
 ```
 
 Couverture : `AuthServiceTest` (règles métier), `JwtTokenProviderTest` (claims + expiration), `AuthControllerTest` (statuts HTTP/validation via MockMvc standalone), `AuthIntegrationTest` (parcours inscription → login → `/auth/me`, H2 + Flyway + profil `test`).

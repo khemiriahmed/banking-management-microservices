@@ -53,7 +53,7 @@ services:
       retries: 20
 
   config-server:
-    build: ../services/config-server
+    build: ../backend/config-server
     container_name: banking-config-server
     ports:
       - "8888:8888"
@@ -68,7 +68,7 @@ services:
       retries: 30
 
   discovery-server:
-    build: ../services/discovery-server
+    build: ../backend/discovery-server
     container_name: banking-discovery-server
     ports:
       - "8761:8761"
@@ -84,7 +84,7 @@ services:
       retries: 30
 
   api-gateway:
-    build: ../services/api-gateway
+    build: ../backend/api-gateway
     container_name: banking-api-gateway
     ports:
       - "8080:8080"
@@ -103,7 +103,7 @@ services:
       retries: 30
 
   demo-service:
-    build: ../services/demo-service
+    build: ../backend/demo-service
     container_name: banking-demo-service
     ports:
       - "8081:8081"
@@ -117,7 +117,7 @@ services:
         condition: service_healthy
 
   auth-service:
-    build: ../services/auth-service
+    build: ../backend/auth-service
     container_name: banking-auth-service
     ports:
       - "8082:8082"
@@ -142,7 +142,7 @@ services:
       retries: 30
 
   user-service:
-    build: ../services/user-service
+    build: ../backend/user-service
     container_name: banking-user-service
     ports:
       - "8083:8083"
@@ -167,7 +167,7 @@ services:
       retries: 30
 
   account-service:
-    build: ../services/account-service
+    build: ../backend/account-service
     container_name: banking-account-service
     ports:
       - "8084:8084"
@@ -188,6 +188,20 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget --spider -q http://localhost:8084/actuator/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  frontend:
+    build: ../frontend
+    container_name: banking-frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://127.0.0.1/"]
       interval: 5s
       timeout: 5s
       retries: 30

@@ -40,7 +40,7 @@ Codes d'erreur JSON : `400` validation/UUID invalide, `401` JWT absent ou invali
 ## Tests
 
 ```powershell
-$env:JAVA_HOME='C:\Users\Ahmed\AppData\Local\Temp\opencode\toolchain\jdk-17.0.21+9'; $env:PATH="$env:JAVA_HOME\bin;C:\Users\Ahmed\AppData\Local\Temp\opencode\toolchain\apache-maven-3.9.16\bin;$env:PATH"; mvn -B test
+$env:JAVA_HOME='C:\Users\Ahmed\AppData\Local\Temp\opencode\toolchain\jdk-17.0.21+9'; $env:PATH="$env:JAVA_HOME\bin;C:\Users\Ahmed\AppData\Local\Temp\opencode\toolchain\apache-maven-3.9.16\bin;$env:PATH"; mvn -B -f backend/user-service/pom.xml test
 ```
 
 Couverture : `JwtTokenVerifierTest` (claims, expiration, subject invalide), `CustomerProfileServiceTest` (provisioning, `authUserId` immuable, pagination), `UserServiceIntegrationTest` (isolation des profils, en-tête forgé ignoré, rôles CLIENT/ADMIN, JWT invalide, validation, H2 + Flyway). 13 tests verts.
