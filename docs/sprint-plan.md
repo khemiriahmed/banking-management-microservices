@@ -9,7 +9,7 @@ Objectif : un sprint traité par jour ouvré. Les sprints longs du cahier des ch
 | J3 | 2 — Auth | Inscription, login, JWT via Gateway | S1 | Terminé |
 | J4 | 3 — Users | Profil client sécurisé, rôles | S2 | Terminé |
 | J5 | 4 — Accounts | Comptes, soldes `BigDecimal`, statuts | S3 | Terminé |
-| J6 | 5 — Beneficiaries | CRUD bénéficiaires isolés par client | S4 | À faire |
+| J6 | 5 — Beneficiaries | CRUD bénéficiaires isolés par client | S4 | Terminé |
 | J7-8 | 6 — Transfers | Saga, compensation, idempotence | S4-S5 | À faire |
 | J9 | 7 — Transactions | Historique paginé et sécurisé | S6 | À faire |
 | J10 | 8 — Events | RabbitMQ, notifications, audit | S6-S7 | À faire |
@@ -91,11 +91,24 @@ Branche dédiée : `sprint/04-account-service`, conservée après merge dans `de
 ## Travaux transverses (structure et conteneurisation)
 
 - [x] Microservices déplacés de `services/` vers `backend/` ; chemins du Compose et de la documentation mis à jour.
-- [x] Application Angular 15 créée dans `frontend/` : connexion JWT, intercepteur `Authorization`, tableau de bord des comptes, 3 tests verts.
+- [x] Application Angular 15 créée dans `frontend/` : connexion JWT, intercepteur `Authorization`, tableau de bord des comptes et des bénéficiaires, 7 tests verts.
 - [x] `frontend/Dockerfile` (build `node:18-alpine`, service `nginx:1.27-alpine`) et `frontend/nginx.conf` (proxy API vers `api-gateway:8080`).
 - [x] Service `frontend` ajouté au Compose sur le port hôte `4200` ; plateforme validée avec 11 conteneurs et healthchecks `UP`.
 
 Branche dédiée : `chore/backend-frontend-docker`.
+
+## Détail du Sprint 5 (terminé)
+
+- [x] 5.1 — Entité `Beneficiary` et enum `BeneficiaryStatus` dans `account-service` : `id`, `ownerUserId`, `displayName`, `destinationAccountReference` masquée, `createdAt`, `status`.
+- [x] 5.2 — Migration Flyway `V2__create_beneficiaries.sql` avec index propriétaire et unicité `(owner_user_id, destination_account_reference)`.
+- [x] 5.3 — Endpoints `POST /beneficiaries`, `GET /beneficiaries`, `GET /beneficiaries/{id}`, `PUT /beneficiaries/{id}` et `DELETE /beneficiaries/{id}`.
+- [x] 5.4 — Propriété vérifiée sur chaque opération via `AuthenticatedUser.getAuthUserId()` ; un autre client reçoit `404`.
+- [x] 5.5 — Validation : nom obligatoire, longueur maximale, format fictif `FR76 **** **** **** 1234` et unicité par client (`409`).
+- [x] 5.6 — Route Gateway `/beneficiaries/**` vers `lb://ACCOUNT-SERVICE`, proxy Angular et Nginx mis à jour.
+- [x] 5.7 — UI Angular : ajout, liste, activation/désactivation, suppression et affichage de la référence déjà masquée par le backend.
+- [x] 5.8 — Tests unitaires + intégration H2/Flyway : 25 tests backend verts, 7 tests Angular verts, validation Docker complète (voir [account-service.md](account-service.md)).
+
+Branche dédiée : `sprint/05-beneficiaries`, conservée après merge dans `develop`.
 
 ## Règle de passage au sprint suivant
 
