@@ -35,7 +35,7 @@ describe('AppComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('authenticates and loads accounts with the bearer token', () => {
+  it('authenticates and loads accounts and beneficiaries with the bearer token', () => {
     component.email = 'client@example.com';
     component.password = 'password';
 
@@ -65,8 +65,58 @@ describe('AppComponent', () => {
       }
     ]);
 
+    const beneficiariesRequest = httpController.expectOne('/beneficiaries');
+    expect(beneficiariesRequest.request.method).toBe('GET');
+    expect(beneficiariesRequest.request.headers.get('Authorization')).toBe('Bearer test-token');
+    beneficiariesRequest.flush([{
+      id: 'd0e1f2a3-4b5c-4d6e-8f90-1a2b3c4d5e6f',
+      ownerUserId: '7d4f0c8e-0b1e-4f6a-9e7a-1b6f0f8d6c22',
+      displayName: 'Alice',
+      destinationAccountReference: 'FR76 **** **** **** 1234',
+      status: 'ACTIVE',
+      createdAt: '2026-01-01T10:00:00Z'
+    }]);
+
     expect(component.authenticated).toBeTrue();
     expect(component.accounts.length).toBe(1);
+    expect(component.beneficiaries.length).toBe(1);
+  });
+
+  it('creates a beneficiary and refreshes the masked list', () => {
+    localStorage.setItem('banking-access-token', 'test-token');
+    component.beneficiaryName = 'Alice';
+    component.beneficiaryReference = 'FR76 **** **** **** 1234';
+
+    component.createBeneficiary();
+
+    const createRequest = httpController.expectOne('/beneficiaries');
+    expect(createRequest.request.method).toBe('POST');
+    expect(createRequest.request.body).toEqual({
+      displayName: 'Alice',
+      destinationAccountReference: 'FR76 **** **** **** 1234'
+    });
+    createRequest.flush({
+      id: 'd0e1f2a3-4b5c-4d6e-8f90-1a2b3c4d5e6f',
+      ownerUserId: '7d4f0c8e-0b1e-4f6a-9e7a-1b6f0f8d6c22',
+      displayName: 'Alice',
+      destinationAccountReference: 'FR76 **** **** **** 1234',
+      status: 'ACTIVE',
+      createdAt: '2026-01-01T10:00:00Z'
+    });
+
+    const listRequest = httpController.expectOne('/beneficiaries');
+    expect(listRequest.request.method).toBe('GET');
+    listRequest.flush([{
+      id: 'd0e1f2a3-4b5c-4d6e-8f90-1a2b3c4d5e6f',
+      ownerUserId: '7d4f0c8e-0b1e-4f6a-9e7a-1b6f0f8d6c22',
+      displayName: 'Alice',
+      destinationAccountReference: 'FR76 **** **** **** 1234',
+      status: 'ACTIVE',
+      createdAt: '2026-01-01T10:00:00Z'
+    }]);
+
+    expect(component.beneficiaries.length).toBe(1);
+    expect(component.beneficiaryName).toBe('');
   });
 
   it('clears the session on logout', () => {
@@ -76,6 +126,7 @@ describe('AppComponent', () => {
 
     expect(component.authenticated).toBeFalse();
     expect(component.accounts.length).toBe(0);
+    expect(component.beneficiaries.length).toBe(0);
     expect(localStorage.getItem('banking-access-token')).toBeNull();
   });
 });

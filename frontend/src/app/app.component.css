@@ -104,3 +104,22 @@ th {
   background: #ffe9e9;
   color: #9b1c1c;
 }
+
+.beneficiary-card {
+  margin-top: 24px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.actions button {
+  padding: 6px 10px;
+  font-size: 0.8rem;
+}
+
+button.danger {
+  background: #b42318;
+  color: #ffffff;
+}
