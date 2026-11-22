@@ -1,4 +1,4 @@
-# Ports et services — Sprint 4 + frontend
+# Ports et services — Sprint 5 + frontend
 
 ## Versions retenues
 
@@ -24,7 +24,7 @@
 | Demo Service | `demo-service` | 8081 | `http://localhost:8081` | Service temporaire de validation du routage |
 | Auth Service | `auth-service` | 8082 | `http://localhost:8082` | Inscription, login BCrypt, JWT HS256, `/auth/me` |
 | User Service | `user-service` | 8083 | `http://localhost:8083` | Profils clients, endpoints `/users/me` et `/admin/users` |
-| Account Service | `account-service` | 8084 | `http://localhost:8084` | Comptes, soldes, statuts, opérations internes `/internal/**` |
+| Account Service | `account-service` | 8084 | `http://localhost:8084` | Comptes, bénéficiaires, soldes, statuts, opérations internes `/internal/**` |
 | Frontend | `frontend` | 4200 | `http://localhost:4200` | Application Angular 15 servie par Nginx, API proxifiée vers `api-gateway:8080` |
 | PostgreSQL Auth | `postgres-auth` | 5432 | `jdbc:postgresql://localhost:5432/auth_db` | Base logique de l'authentification |
 | PostgreSQL User | `postgres-user` | 5433 | `jdbc:postgresql://localhost:5433/user_db` | Base logique des profils clients |
@@ -37,7 +37,7 @@
 Dossier : `infrastructure/config-repo/`, lu par le Config Server en mode `native`.
 
 - `application.yml` : valeurs communes non sensibles, intervalle de rafraîchissement Eureka.
-- `api-gateway.yml` : routes `auth-service` (`/auth/**` → `lb://AUTH-SERVICE`), `demo-service` (`/demo/**` → `lb://DEMO-SERVICE`), `account-service` (`/accounts/**,/admin/accounts/**` → `lb://ACCOUNT-SERVICE`) et `user-service` (`/users/**,/admin/**` → `lb://USER-SERVICE`). Les routes `/internal/**` ne sont pas exposées.
+- `api-gateway.yml` : routes `auth-service` (`/auth/**` → `lb://AUTH-SERVICE`), `demo-service` (`/demo/**` → `lb://DEMO-SERVICE`), `account-service` (`/accounts/**,/admin/accounts/**,/beneficiaries/**` → `lb://ACCOUNT-SERVICE`) et `user-service` (`/users/**,/admin/**` → `lb://USER-SERVICE`). Les routes `/internal/**` ne sont pas exposées. Le proxy Angular (`proxy.conf.json` en dev, `nginx.conf` en conteneur) relaie aussi `/beneficiaries/**` vers le Gateway.
 - `demo-service.yml` : `app.message=pong-from-config-server`, preuve que la configuration est bien distribuée.
 
 Aucun secret n'est stocké dans ce dossier. Les surcharges possibles sont `CONFIG_REPO_LOCATION`, `CONFIG_SERVER_URL` et `EUREKA_URI`.
@@ -52,15 +52,15 @@ docker compose -f infrastructure/docker-compose.yml --env-file infrastructure/.e
 
 `docker compose down` arrête tout ; ajouter `-v` supprime également les volumes `postgres-auth-data`, `postgres-user-data` et `postgres-account-data`.
 
-## Vérifications Sprint 2, Sprint 3 et Sprint 4
+## Vérifications Sprint 2, Sprint 3, Sprint 4 et Sprint 5
 
 | Vérification | Commande / URL | Résultat attendu |
 | --- | --- | --- |
 | Santé | `GET /actuator/health` sur 8888/8761/8080/8082/8083/8084 | `UP` |
 | Flyway Auth | `docker exec banking-postgres-auth psql -U auth_user -d auth_db -c '\dt'` | `roles`, `user_credentials`, `user_roles`, `flyway_schema_history` |
 | Flyway User | `docker exec banking-postgres-user psql -U user_user -d user_db -c '\dt'` | `customer_profiles`, `flyway_schema_history` |
-| Flyway Account | `docker exec banking-postgres-account psql -U account_user -d account_db -c '\dt'` | `bank_accounts`, `flyway_schema_history` |
-| Routes Gateway | `GET http://localhost:8080/actuator/gateway/routes` | `auth-service,demo-service,account-service,user-service` |
+| Flyway Account | `docker exec banking-postgres-account psql -U account_user -d account_db -c '\dt'` | `bank_accounts`, `beneficiaries`, `flyway_schema_history` |
+| Routes Gateway | `GET http://localhost:8080/actuator/gateway/routes` | `auth-service,demo-service,account-service,user-service`, route account avec `/beneficiaries/**` |
 | Frontend | `GET http://localhost:4200/` | `200`, page Angular, health `UP` |
 | Eureka | `GET http://localhost:8761/eureka/apps` | `API-GATEWAY,DEMO-SERVICE,AUTH-SERVICE,USER-SERVICE,ACCOUNT-SERVICE` |
 | Inscription | `POST http://localhost:8080/auth/register` | `201`, rôle `CLIENT` |
@@ -83,5 +83,12 @@ docker compose -f infrastructure/docker-compose.yml --env-file infrastructure/.e
 | Opérations internes | reserve/debit/credit sur `http://localhost:8084/internal/accounts/{id}/...` | `200`, solde final `949.75` |
 | Route interne non exposée | `POST http://localhost:8080/internal/accounts/{id}/reserve` | `404` |
 | Compte suspendu | `PATCH /admin/accounts/{id}/status` puis reserve interne | `200` puis `409` |
+| Bénéficiaires du client | `GET http://localhost:8080/beneficiaries` avec `Bearer <jwt>` | `200`, uniquement les bénéficiaires du `sub` |
+| Création bénéficiaire | `POST http://localhost:8080/beneficiaries` avec référence `FR76 **** **** **** 1234` | `201`, statut `ACTIVE`, référence masquée |
+| Doublon bénéficiaire | `POST /beneficiaries` avec la même référence pour le même client | `409` |
+| Référence non masquée | `POST /beneficiaries` avec un IBAN complet | `400` |
+| Autre client bénéficiaire | `GET`, `PUT` ou `DELETE /beneficiaries/{id}` avec un JWT d'un autre client | `404` |
+| Mise à jour bénéficiaire | `PUT http://localhost:8080/beneficiaries/{id}` | `200`, champs modifiés |
+| Suppression bénéficiaire | `DELETE http://localhost:8080/beneficiaries/{id}` puis `GET` | `204` puis `404` |
 
 Toutes ces vérifications ont été exécutées avec succès dans Docker les 21/11/2026 et 22/11/2026. Détails : [auth-service.md](auth-service.md), [user-service.md](user-service.md) et [account-service.md](account-service.md).

@@ -106,7 +106,7 @@ Détails des services et vérifications : [docs/ports-and-services.md](docs/port
 
 ## Sprints
 
-Feuille de route détaillée : [docs/sprint-plan.md](docs/sprint-plan.md). Statut actuel : **Sprint 4 terminé, Sprint 5 à démarrer**.
+Feuille de route détaillée : [docs/sprint-plan.md](docs/sprint-plan.md). Statut actuel : **Sprint 5 terminé, Sprint 6 à démarrer**.
 
 ## Sécurité et qualité
 

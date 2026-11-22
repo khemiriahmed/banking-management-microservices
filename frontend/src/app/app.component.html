@@ -58,4 +58,54 @@
     <p *ngIf="!isLoading && accounts.length === 0">Aucun compte disponible.</p>
     <p *ngIf="isLoading">Chargement...</p>
   </section>
+
+  <section class="card beneficiary-card" *ngIf="authenticated">
+    <div class="toolbar">
+      <h2>Mes beneficiaires</h2>
+      <button type="button" (click)="loadBeneficiaries()">Rafraichir</button>
+    </div>
+
+    <form (ngSubmit)="createBeneficiary()">
+      <label>
+        Nom du beneficiaire
+        <input name="beneficiaryName" [(ngModel)]="beneficiaryName" required maxlength="100">
+      </label>
+      <label>
+        Reference compte masquee
+        <input
+          name="beneficiaryReference"
+          [(ngModel)]="beneficiaryReference"
+          placeholder="FR76 **** **** **** 1234"
+          required
+          maxlength="32">
+      </label>
+      <button type="submit">Ajouter</button>
+    </form>
+
+    <table *ngIf="beneficiaries.length > 0">
+      <thead>
+        <tr>
+          <th>Nom</th>
+          <th>Reference masquee</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let beneficiary of beneficiaries">
+          <td>{{ beneficiary.displayName }}</td>
+          <td>{{ beneficiary.destinationAccountReference }}</td>
+          <td>{{ beneficiary.status }}</td>
+          <td class="actions">
+            <button type="button" class="secondary" (click)="updateBeneficiaryStatus(beneficiary)">
+              {{ beneficiary.status === 'ACTIVE' ? 'Desactiver' : 'Activer' }}
+            </button>
+            <button type="button" class="danger" (click)="deleteBeneficiary(beneficiary)">Supprimer</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p *ngIf="beneficiaries.length === 0">Aucun beneficiaire enregistre.</p>
+  </section>
 </main>

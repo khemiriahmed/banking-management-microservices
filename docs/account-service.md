@@ -1,15 +1,17 @@
-# Account Service — Sprint 4
+# Account Service — Sprint 5
 
-Port : `8084` (direct) / `8080/accounts/**` et `8080/admin/accounts/**` via l'API Gateway. Base dédiée : `account_db`, exposée localement sur `5434`.
+Port : `8084` (direct) / `8080/accounts/**`, `8080/admin/accounts/**` et `8080/beneficiaries/**` via l'API Gateway. Base dédiée : `account_db`, exposée localement sur `5434`.
 
 ## Responsabilités
 
 - Créer et gérer des comptes bancaires fictifs avec `ownerUserId` issu du JWT, jamais d'un en-tête ou d'un corps de requête forgé par le client.
+- Enregistrer, consulter, modifier et supprimer les bénéficiaires du client authentifié, sans jamais faire confiance à un `ownerUserId` envoyé par le frontend.
 - Valider localement le JWT HS256 émis par `auth-service` ; le Gateway ne fait que transmettre `Authorization`.
-- Isoler les lectures client : un compte appartenant à un autre utilisateur renvoie `404` pour éviter l'énumération.
+- Isoler les lectures client : un compte ou un bénéficiaire appartenant à un autre utilisateur renvoie `404` pour éviter l'énumération.
 - Réserver les opérations d'administration (création de compte, changement de statut) au rôle `ADMIN`.
 - Préparer les primitives internes utilisées plus tard par `transfer-service` : réservation, débit, crédit et libération.
 - Migration Flyway `V1__create_bank_accounts.sql` : `bank_accounts(id, owner_user_id, account_number_masked, account_type, currency, status, balance, reserved_balance, version, created_at)` avec index sur `owner_user_id` et `status`.
+- Migration Flyway `V2__create_beneficiaries.sql` : `beneficiaries(id, owner_user_id, display_name, destination_account_reference, status, created_at)`, index sur `owner_user_id` et contrainte d'unicité `(owner_user_id, destination_account_reference)`.
 - Aucune clé étrangère SQL inter-bases : `ownerUserId` est un UUID issu du domaine d'authentification.
 
 ## Règles métier
@@ -21,6 +23,8 @@ Port : `8084` (direct) / `8080/accounts/**` et `8080/admin/accounts/**` via l'AP
 - `reserve` vérifie le solde disponible ; `debit` consomme la réservation ; `credit` augmente le solde ; `release` restitue une réservation.
 - Concurrence : verrou pessimiste (`PESSIMISTIC_WRITE`) et `@Version` pour détecter les mises à jour simultanées.
 - Un compte non `ACTIVE`, une devise différente ou un solde insuffisant renvoie `409`.
+- Bénéficiaires : `displayName` obligatoire (100 caractères maximum), référence destination déjà masquée au format fictif `FR76 **** **** **** 1234`, statuts `ACTIVE`/`INACTIVE`, unicité de la référence par client.
+- Chaque lecture, mise à jour et suppression de bénéficiaire est filtrée par `AuthenticatedUser.getAuthUserId()` ; un autre client reçoit `404`.
 
 ## Endpoints
 
@@ -30,6 +34,11 @@ Port : `8084` (direct) / `8080/accounts/**` et `8080/admin/accounts/**` via l'AP
 | `GET` | `/accounts/{id}` | JWT `CLIENT` ou `ADMIN` | `200` + compte du `sub`, `404` sinon |
 | `POST` | `/admin/accounts` | JWT `ADMIN` | `201` + compte créé |
 | `PATCH` | `/admin/accounts/{id}/status` | JWT `ADMIN` | `200` + compte mis à jour |
+| `GET` | `/beneficiaries` | JWT requis | `200` + bénéficiaires du `sub` |
+| `GET` | `/beneficiaries/{id}` | JWT requis | `200` + bénéficiaire du `sub`, `404` sinon |
+| `POST` | `/beneficiaries` | JWT requis | `201` + bénéficiaire créé, référence masquée |
+| `PUT` | `/beneficiaries/{id}` | JWT requis | `200` + bénéficiaire mis à jour, `404` sinon |
+| `DELETE` | `/beneficiaries/{id}` | JWT requis | `204`, `404` si autre client |
 | `POST` | `/internal/accounts/{id}/reserve` | `X-Internal-Service-Token` | `200` + soldes internes |
 | `POST` | `/internal/accounts/{id}/debit` | `X-Internal-Service-Token` | `200` + soldes internes |
 | `POST` | `/internal/accounts/{id}/credit` | `X-Internal-Service-Token` | `200` + soldes internes |
@@ -38,7 +47,7 @@ Port : `8084` (direct) / `8080/accounts/**` et `8080/admin/accounts/**` via l'AP
 
 Les routes `/internal/**` ne sont pas exposées par le Gateway : elles sont accessibles uniquement depuis le réseau interne via le port `8084`. Le corps des opérations internes contient `amount` et `currency`.
 
-Codes d'erreur JSON : `400` validation/montant invalide, `401` JWT ou token interne absent/invalide, `403` rôle insuffisant, `404` compte introuvable ou autre client, `409` conflit métier/concurrence, `500` erreur inattendue.
+Codes d'erreur JSON : `400` validation/montant/référence invalide, `401` JWT ou token interne absent/invalide, `403` rôle insuffisant, `404` compte ou bénéficiaire introuvable ou autre client, `409` conflit métier/concurrence/doublon, `500` erreur inattendue.
 
 ## Configuration
 
@@ -62,12 +71,15 @@ Codes d'erreur JSON : `400` validation/montant invalide, `401` JWT ou token inte
 $env:JAVA_HOME='C:\Users\Ahmed\AppData\Local\Temp\opencode\toolchain\jdk-17.0.21+9'; $env:PATH="$env:JAVA_HOME\bin;C:\Users\Ahmed\AppData\Local\Temp\opencode\toolchain\apache-maven-3.9.16\bin;$env:PATH"; mvn -B -f backend/account-service/pom.xml test
 ```
 
-Couverture : `JwtTokenVerifierTest` (claims, expiration, subject invalide), `AccountServiceTest` (règles de solde, réservation, débit, crédit, libération, précision), `AccountServiceIntegrationTest` (isolation des clients, rôles, statut suspendu, token interne, BigDecimal et concurrence, H2 + Flyway). 16 tests verts.
+Couverture : `JwtTokenVerifierTest` (claims, expiration, subject invalide), `AccountServiceTest` et `AccountServiceIntegrationTest` (Sprint 4), `BeneficiaryServiceTest` (validation, unicité, propriété, mapping) et `BeneficiaryIntegrationTest` (CRUD via MockMvc, isolation entre clients, référence masquée, doublon `409`, entrées invalides `400`, H2 + Flyway). 25 tests verts.
+
+Les tests Angular correspondants (`BeneficiaryService`, `AppComponent`) sont exécutés dans `node:18-alpine` avec Chromium headless : 7 tests verts.
 
 ## Validation Docker effectuée
 
 ```powershell
+docker compose -f infrastructure/docker-compose.yml --env-file infrastructure/.env config --quiet
 docker compose -f infrastructure/docker-compose.yml --env-file infrastructure/.env up -d --build
 ```
 
-Résultats le 22/11/2026 : 10 conteneurs `Up`, healths `UP` pour les 9 conteneurs instrumentés, tables `bank_accounts` et `flyway_schema_history` dans `account_db`, routes Gateway `auth-service,demo-service,account-service,user-service`, Eureka `ACCOUNT-SERVICE`. Parcours validé : client sans compte `200`, accès ADMIN refusé pour un `CLIENT` `403`, solde initial négatif `400`, création ADMIN `201`, numéro masqué, `reservedBalance` absent de la réponse client, lecture du propre compte `200`, compte d'un autre client `404`, précision à 3 décimales `400`, token interne absent `401`, reserve/debit/credit `200`, libération après débit `409`, route interne via Gateway `404`, suspension ADMIN `200`, réservation sur compte suspendu `409`, solde final `949.75`.
+Résultats le 22/11/2026 : 11 conteneurs `Up`, healths `UP` pour les conteneurs instrumentés, tables `bank_accounts`, `beneficiaries` et `flyway_schema_history` dans `account_db`, route Gateway `account-service` avec prédicat `/accounts/**,/admin/accounts/**,/beneficiaries/**`, Eureka `ACCOUNT-SERVICE`. Parcours bénéficiaires validé via `http://localhost:8080` : inscription de deux clients `201`, création `201` avec référence masquée et statut `ACTIVE`, liste `200`, doublon `409`, référence non masquée `400`, lecture par un autre client `404`, mise à jour `200` avec statut `INACTIVE`, suppression `204`, lecture après suppression `404`. Frontend `http://localhost:4200/` `200` et proxy `/auth/me` sans token `401`.
