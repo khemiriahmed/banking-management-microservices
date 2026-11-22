@@ -7,6 +7,7 @@
 3. Base de données privée par service. Aucune jointure ni accès SQL direct entre services.
 4. Communications synchrones via REST interne (identité propagée par JWT validé), asynchrones via RabbitMQ à partir du sprint 8.
 5. Sécurité défensive : chaque service revérifie le token, le rôle et la propriété de la ressource.
+6. Les appels internes entre services utilisent un secret dédié (`X-Internal-Service-Token`) et ne sont pas routés par le Gateway.
 
 ## Flux d'une requête
 
@@ -28,7 +29,7 @@ Le Gateway transmet l'en-tête `Authorization`. Les services ne font pas confian
 | api-gateway | Routage et point d'entrée unique | — | 1 |
 | auth-service | Identifiants, rôles, BCrypt, JWT | auth_db | 2 |
 | user-service | Profils clients, administration des utilisateurs | user_db | 3 |
-| account-service | Comptes, soldes, statuts, bénéficiaires | account_db | 4-5 |
+| account-service | Comptes, soldes, statuts, primitives internes de transfert | account_db | 4 |
 | transfer-service | Virements, Saga, idempotence | transfer_db | 6 |
 | transaction-service | Historique des mouvements confirmés | transaction_db | 7 |
 | notification-service | Notifications via événements | notification_db | 8 |
@@ -39,6 +40,7 @@ Le Gateway transmet l'en-tête `Authorization`. Les services ne font pas confian
 - Identifiants `UUID` pour les entités métier.
 - Montants et soldes : `BigDecimal`, devise explicite, jamais `float`/`double`.
 - Statuts de compte : actif, suspendu, clôturé ; un compte suspendu ne peut pas être débité.
+- Solde disponible : solde comptable moins solde réservé ; la réservation n'est jamais exposée au client.
 - Virements : `REQUESTED -> VALIDATING -> PROCESSING -> COMPLETED | FAILED`, compensation en cas d'échec.
 - Idempotence : clé unique stockée avec le résultat pour éviter les doubles débits.
 - Événements : `eventId`, `eventType`, `occurredAt`, payload minimal, sans secret ni token.

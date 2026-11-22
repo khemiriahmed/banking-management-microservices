@@ -8,7 +8,7 @@ Objectif : un sprint traité par jour ouvré. Les sprints longs du cahier des ch
 | J2 | 1 — Fondations Spring Cloud | Config Server + Eureka + Gateway | S0 | Terminé |
 | J3 | 2 — Auth | Inscription, login, JWT via Gateway | S1 | Terminé |
 | J4 | 3 — Users | Profil client sécurisé, rôles | S2 | Terminé |
-| J5 | 4 — Accounts | Comptes, soldes `BigDecimal`, statuts | S3 | À faire |
+| J5 | 4 — Accounts | Comptes, soldes `BigDecimal`, statuts | S3 | Terminé |
 | J6 | 5 — Beneficiaries | CRUD bénéficiaires isolés par client | S4 | À faire |
 | J7-8 | 6 — Transfers | Saga, compensation, idempotence | S4-S5 | À faire |
 | J9 | 7 — Transactions | Historique paginé et sécurisé | S6 | À faire |
@@ -73,6 +73,20 @@ Branche dédiée : `sprint/02-auth`, conservée après merge dans `develop`.
 - [x] 3.8 — Tests unitaires + intégration H2/Flyway : 13 tests verts ; validation Docker complète (voir [user-service.md](user-service.md)).
 
 Branche dédiée : `sprint/03-user-service`, conservée après merge dans `develop`.
+
+## Détail du Sprint 4 (terminé)
+
+- [x] 4.1 — `account-service` : Spring Security, JPA, Flyway, PostgreSQL, JWT local, Maven Wrapper, Dockerfile.
+- [x] 4.2 — Migration `V1__create_bank_accounts.sql` : `bank_accounts`, `NUMERIC(19,2)`, `reservedBalance`, `@Version` et index métier.
+- [x] 4.3 — Endpoints client `GET /accounts` et `GET /accounts/{id}` avec filtrage strict par `sub` du JWT ; autre client renvoie `404`.
+- [x] 4.4 — Endpoints ADMIN `POST /admin/accounts` et `PATCH /admin/accounts/{id}/status`, réservés à `ADMIN`.
+- [x] 4.5 — Règles `BigDecimal` : devise ISO 3 lettres majuscules, deux décimales maximum, montant initial non négatif, opérations positives.
+- [x] 4.6 — Primitives internes reserve/debit/credit/release protégées par `X-Internal-Service-Token`, non exposées via le Gateway.
+- [x] 4.7 — Concurrence gérée par `PESSIMISTIC_WRITE` et `@Version` ; comptes non actifs, devise incohérente et solde insuffisant renvoient `409`.
+- [x] 4.8 — Routes Gateway `/accounts/**` et `/admin/accounts/**` avant la route `/admin/**` user, conteneurs `postgres-account` et `account-service`.
+- [x] 4.9 — Tests unitaires + intégration H2/Flyway : 16 tests verts ; validation Docker complète (voir [account-service.md](account-service.md)).
+
+Branche dédiée : `sprint/04-account-service`, conservée après merge dans `develop`.
 
 ## Règle de passage au sprint suivant
 
