@@ -35,6 +35,23 @@ services:
       timeout: 5s
       retries: 20
 
+  postgres-account:
+    image: postgres:16-alpine
+    container_name: banking-postgres-account
+    environment:
+      POSTGRES_DB: ${ACCOUNT_DB_NAME:-account_db}
+      POSTGRES_USER: ${ACCOUNT_DB_USER:-account_user}
+      POSTGRES_PASSWORD: ${ACCOUNT_DB_PASSWORD:?ACCOUNT_DB_PASSWORD is required}
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres-account-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${ACCOUNT_DB_USER:-account_user} -d ${ACCOUNT_DB_NAME:-account_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
   config-server:
     build: ../services/config-server
     container_name: banking-config-server
@@ -149,6 +166,33 @@ services:
       timeout: 5s
       retries: 30
 
+  account-service:
+    build: ../services/account-service
+    container_name: banking-account-service
+    ports:
+      - "8084:8084"
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_URI: http://discovery-server:8761/eureka/
+      ACCOUNT_DB_URL: jdbc:postgresql://postgres-account:5432/${ACCOUNT_DB_NAME:-account_db}
+      ACCOUNT_DB_USER: ${ACCOUNT_DB_USER:-account_user}
+      ACCOUNT_DB_PASSWORD: ${ACCOUNT_DB_PASSWORD:?ACCOUNT_DB_PASSWORD is required}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?INTERNAL_SERVICE_TOKEN is required}
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      postgres-account:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:8084/actuator/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
 volumes:
   postgres-auth-data:
   postgres-user-data:
+  postgres-account-data:
