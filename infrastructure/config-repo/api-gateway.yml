@@ -18,6 +18,10 @@ spring:
               uri: lb://ACCOUNT-SERVICE
               predicates:
                 - Path=/accounts/**,/admin/accounts/**,/beneficiaries/**
+            - id: transfer-service
+              uri: lb://TRANSFER-SERVICE
+              predicates:
+                - Path=/transfers/**
             - id: user-service
               uri: lb://USER-SERVICE
               predicates:
