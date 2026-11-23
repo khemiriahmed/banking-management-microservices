@@ -21,11 +21,11 @@
 | Config Server | `config-server` | 8888 | `http://localhost:8888` | Configuration non sensible, profil `native`, dépôt monté en `/config-repo` |
 | Discovery Server | `discovery-server` | 8761 | `http://localhost:8761` | Tableau de bord Eureka |
 | API Gateway | `api-gateway` | 8080 | `http://localhost:8080` | Point d'entrée unique, routes `lb://` |
-| Demo Service | `demo-service` | 8081 | `http://localhost:8081` | Service temporaire de validation du routage |
+| Demo Service | `demo-service` | 8081 | `http://localhost:8081` | Service temporaire de validation du routage |`n| Auth Service | `auth-service` | 8082 | `http://localhost:8082` | Inscription, login BCrypt, JWT HS256, `/auth/me` |`n| User Service | `user-service` | 8083 | `http://localhost:8083` | Profils clients, endpoints `/users/me` et `/admin/users` |`n| Account Service | `account-service` | 8084 | `http://localhost:8084` | Comptes, b?n?ficiaires, soldes, statuts, op?rations internes `/internal/**` |`n| Transfer Service | `transfer-service` | 8085 | `http://localhost:8085` | Virements Saga, compensation, idempotence, publication ?v?nements |`n| Transaction Service | `transaction-service` | 8086 | `http://localhost:8086` | Historique transactions, idempotence, consultation client |`n| Notification Service | `notification-service` | 8087 | `http://localhost:8087` | Notifications asynchrones, idempotence `eventId`, lecture/marquage |`n| Audit Service | `audit-service` | 8088 | `http://localhost:8088` | Audit asynchrone ADMIN, idempotence `eventId`, m?tadonn?es non sensibles |`n| RabbitMQ | `rabbitmq` | 5672/15672 | `http://localhost:15672` | Broker ?v?nements, exchange topic `banking.events.exchange` |`n| Frontend | `frontend` | 4200 | `http://localhost:4200` | Application Angular 15 servie par Nginx, API proxifi?e vers `api-gateway:8080` | `demo-service` | 8081 | `http://localhost:8081` | Service temporaire de validation du routage |
 | Auth Service | `auth-service` | 8082 | `http://localhost:8082` | Inscription, login BCrypt, JWT HS256, `/auth/me` |
 | User Service | `user-service` | 8083 | `http://localhost:8083` | Profils clients, endpoints `/users/me` et `/admin/users` |
 | Account Service | `account-service` | 8084 | `http://localhost:8084` | Comptes, bénéficiaires, soldes, statuts, opérations internes `/internal/**` |
-| Transfer Service | `transfer-service` | 8085 | `http://localhost:8085` | Virements Saga, compensation, idempotence, historique de statuts |
+| Transfer Service | `transfer-service` | 8085 | `http://localhost:8085` | Virements Saga, compensation, idempotence, publication ǸvǸnements |
 | Transaction Service | `transaction-service` | 8086 | `http://localhost:8086` | Historique transactions, idempotence par référence externe, consultation client |
 | Frontend | `frontend` | 4200 | `http://localhost:4200` | Application Angular 15 servie par Nginx, API proxifiée vers `api-gateway:8080` |
 | PostgreSQL Auth | `postgres-auth` | 5432 | `jdbc:postgresql://localhost:5432/auth_db` | Base logique de l'authentification |
@@ -33,6 +33,9 @@
 | PostgreSQL Account | `postgres-account` | 5434 | `jdbc:postgresql://localhost:5434/account_db` | Base logique des comptes |
 | PostgreSQL Transfer | `postgres-transfer` | 5435 | `jdbc:postgresql://localhost:5435/transfer_db` | Base logique des virements |
 | PostgreSQL Transaction | `postgres-transaction` | 5436 | `jdbc:postgresql://localhost:5436/transaction_db` | Base logique de l'historique transactions |
+| PostgreSQL Notification | `postgres-notification` | 5437 | `jdbc:postgresql://localhost:5437/notification_db` | Base logique des notifications |
+| PostgreSQL Audit | `postgres-audit` | 5438 | `jdbc:postgresql://localhost:5438/audit_db` | Base logique d'audit |
+| RabbitMQ | `rabbitmq` | 5672/15672 | `http://localhost:15672` | Broker ǸvǸnements, exchange `banking.events.exchange` |
 
 `demo-service` reste uniquement un service de validation du routage.
 

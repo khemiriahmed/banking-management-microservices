@@ -24,17 +24,20 @@ public class TransferOrchestrator {
 
     private final AccountServiceClient client;
     private final TransactionServiceClient transactionClient;
+    private final TransferEventPublisher eventPublisher;
     private final TransferRepository transferRepository;
     private final TransferStatusHistoryRepository historyRepository;
 
     public TransferOrchestrator(
             AccountServiceClient client,
             TransactionServiceClient transactionClient,
+            TransferEventPublisher eventPublisher,
             TransferRepository transferRepository,
             TransferStatusHistoryRepository historyRepository
     ) {
         this.client = client;
         this.transactionClient = transactionClient;
+        this.eventPublisher = eventPublisher;
         this.transferRepository = transferRepository;
         this.historyRepository = historyRepository;
     }
@@ -91,6 +94,7 @@ public class TransferOrchestrator {
         transfer.setCompensationStatus(CompensationStatus.NOT_REQUIRED);
         transition(transfer, TransferStatus.COMPLETED, "Source debited and destination credited");
         recordCompletedTransaction(transfer);
+        eventPublisher.publishTerminalEvent(transfer);
     }
 
     private void compensateRelease(Transfer transfer, RuntimeException cause) {
@@ -127,6 +131,7 @@ public class TransferOrchestrator {
     private void fail(Transfer transfer, String reason) {
         transfer.setFailureReason(truncate(reason));
         transition(transfer, TransferStatus.FAILED, truncate(reason));
+        eventPublisher.publishTerminalEvent(transfer);
     }
 
     private void transition(Transfer transfer, TransferStatus target, String reason) {

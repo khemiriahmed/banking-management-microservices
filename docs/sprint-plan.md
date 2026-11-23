@@ -143,3 +143,12 @@ Branche dédiée : `sprint/07-transaction-service`, conservée après merge dans
 ## Règle de passage au sprint suivant
 
 Aucun sprint suivant ne démarre tant que les critères de validation du sprint courant ne sont pas tous cochés et que le merge dans `develop` n'est pas effectué.
+
+## D?tail du Sprint 8 (termin?)
+
+- [x] 8.1 ??" Infrastructure RabbitMQ : `rabbitmq:3.13-management-alpine` dans `docker-compose.yml`, exchange topic `banking.events.exchange`, queues `notification.events.queue`/`audit.events.queue`, DLX `banking.events.dlx`, DLQ `notification.events.dlq`/`audit.events.dlq`, routing `banking.#`, `default-requeue-rejected=false`.
+- [x] 8.2 ??" `notification-service` (port 8087, `notification_db`) : consommation ?v?nements, cr?ation `Notification`, idempotence par `eventId`, endpoints `GET /notifications` et `PATCH /notifications/{id}/read` (owner-scop?).
+- [x] 8.3 ??" `audit-service` (port 8088, `audit_db`) : consommation ?v?nements, enregistrement `actorId`, `action`, `targetId`, date, m?tadonn?es non sensibles, idempotence par `eventId`, endpoint `GET /admin/audit` (ADMIN).
+- [x] 8.4 ??" `transfer-service` : publication `TransferCompleted` (`banking.transfer.completed`) / `TransferFailed` (`banking.transfer.failed`) avec contrat `TransferEvent(eventId,eventType,occurredAt,payload)` ; publication tol?rante aux erreurs sans invalider le transfert.
+- [x] 8.5 ??" Gateway/config/compose : routes `/notifications/**` ??' `lb://NOTIFICATION-SERVICE`, `/admin/audit/**` ??' `lb://AUDIT-SERVICE`, `/users/**,/admin/users/**` ??' `lb://USER-SERVICE` ; variables RabbitMQ/Postgres ajout?es.
+- [x] 8.6 ??" Tests : notification-service 3/3, audit-service 3/3, transfer-service 25/25 ; validation Docker (services healthy, routes gateway, 401 sans token).
