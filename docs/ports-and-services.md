@@ -1,4 +1,4 @@
-# Ports et services — Sprint 6 + frontend
+# Ports et services — Sprint 7 + frontend
 
 ## Versions retenues
 
@@ -9,7 +9,7 @@
 | Spring Cloud | 2025.0.3 (Northfields) |
 | Maven | 3.9.16 (Maven Wrapper fourni par service) |
 | JJWT | 0.13.0 |
-| PostgreSQL | 16-alpine (containers `banking-postgres-auth`, `banking-postgres-user`, `banking-postgres-account`, `banking-postgres-transfer`) |
+| PostgreSQL | 16-alpine (containers `banking-postgres-auth`, `banking-postgres-user`, `banking-postgres-account`, `banking-postgres-transfer`, `banking-postgres-transaction`) |
 | Angular | 15.2.10 |
 | Node (build frontend) | 18-alpine |
 | Nginx | 1.27-alpine |
@@ -26,11 +26,13 @@
 | User Service | `user-service` | 8083 | `http://localhost:8083` | Profils clients, endpoints `/users/me` et `/admin/users` |
 | Account Service | `account-service` | 8084 | `http://localhost:8084` | Comptes, bénéficiaires, soldes, statuts, opérations internes `/internal/**` |
 | Transfer Service | `transfer-service` | 8085 | `http://localhost:8085` | Virements Saga, compensation, idempotence, historique de statuts |
+| Transaction Service | `transaction-service` | 8086 | `http://localhost:8086` | Historique transactions, idempotence par référence externe, consultation client |
 | Frontend | `frontend` | 4200 | `http://localhost:4200` | Application Angular 15 servie par Nginx, API proxifiée vers `api-gateway:8080` |
 | PostgreSQL Auth | `postgres-auth` | 5432 | `jdbc:postgresql://localhost:5432/auth_db` | Base logique de l'authentification |
 | PostgreSQL User | `postgres-user` | 5433 | `jdbc:postgresql://localhost:5433/user_db` | Base logique des profils clients |
 | PostgreSQL Account | `postgres-account` | 5434 | `jdbc:postgresql://localhost:5434/account_db` | Base logique des comptes |
 | PostgreSQL Transfer | `postgres-transfer` | 5435 | `jdbc:postgresql://localhost:5435/transfer_db` | Base logique des virements |
+| PostgreSQL Transaction | `postgres-transaction` | 5436 | `jdbc:postgresql://localhost:5436/transaction_db` | Base logique de l'historique transactions |
 
 `demo-service` reste uniquement un service de validation du routage.
 
@@ -39,7 +41,7 @@
 Dossier : `infrastructure/config-repo/`, lu par le Config Server en mode `native`.
 
 - `application.yml` : valeurs communes non sensibles, intervalle de rafraîchissement Eureka.
-- `api-gateway.yml` : routes `auth-service` (`/auth/**` → `lb://AUTH-SERVICE`), `demo-service` (`/demo/**` → `lb://DEMO-SERVICE`), `account-service` (`/accounts/**,/admin/accounts/**,/beneficiaries/**` → `lb://ACCOUNT-SERVICE`), `transfer-service` (`/transfers/**` → `lb://TRANSFER-SERVICE`) et `user-service` (`/users/**,/admin/**` → `lb://USER-SERVICE`). Les routes `/internal/**` ne sont pas exposées. Le proxy Angular (`proxy.conf.json` en dev, `nginx.conf` en conteneur) relaie aussi `/beneficiaries/**` et `/transfers/**` vers le Gateway.
+- `api-gateway.yml` : routes `auth-service` (`/auth/**` → `lb://AUTH-SERVICE`), `demo-service` (`/demo/**` → `lb://DEMO-SERVICE`), `account-service` (`/accounts/**,/admin/accounts/**,/beneficiaries/**` → `lb://ACCOUNT-SERVICE`), `transfer-service` (`/transfers/**` → `lb://TRANSFER-SERVICE`), `transaction-service` (`/transactions/**` → `lb://TRANSACTION-SERVICE`) et `user-service` (`/users/**,/admin/**` → `lb://USER-SERVICE`). Les routes `/internal/**` ne sont pas exposées. Le proxy Angular (`proxy.conf.json` en dev, `nginx.conf` en conteneur) relaie aussi `/beneficiaries/**`, `/transfers/**` et `/transactions/**` vers le Gateway.
 - `demo-service.yml` : `app.message=pong-from-config-server`, preuve que la configuration est bien distribuée.
 
 Aucun secret n'est stocké dans ce dossier. Les surcharges possibles sont `CONFIG_REPO_LOCATION`, `CONFIG_SERVER_URL` et `EUREKA_URI`.
@@ -48,13 +50,13 @@ Aucun secret n'est stocké dans ce dossier. Les surcharges possibles sont `CONFI
 
 ```powershell
 copy infrastructure\.env.example infrastructure\.env
-# renseigner AUTH_DB_PASSWORD, USER_DB_PASSWORD, ACCOUNT_DB_PASSWORD, TRANSFER_DB_PASSWORD, JWT_SECRET et INTERNAL_SERVICE_TOKEN dans infrastructure/.env
+# renseigner AUTH_DB_PASSWORD, USER_DB_PASSWORD, ACCOUNT_DB_PASSWORD, TRANSFER_DB_PASSWORD, TRANSACTION_DB_PASSWORD, JWT_SECRET et INTERNAL_SERVICE_TOKEN dans infrastructure/.env
 docker compose -f infrastructure/docker-compose.yml --env-file infrastructure/.env up -d --build
 ```
 
-`docker compose down` arrête tout ; ajouter `-v` supprime également les volumes `postgres-auth-data`, `postgres-user-data`, `postgres-account-data` et `postgres-transfer-data`.
+`docker compose down` arrête tout ; ajouter `-v` supprime également les volumes `postgres-auth-data`, `postgres-user-data`, `postgres-account-data`, `postgres-transfer-data` et `postgres-transaction-data`.
 
-## Vérifications Sprint 2, Sprint 3, Sprint 4, Sprint 5 et Sprint 6
+## Vérifications Sprint 2, Sprint 3, Sprint 4, Sprint 5, Sprint 6 et Sprint 7
 
 | Vérification | Commande / URL | Résultat attendu |
 | --- | --- | --- |
@@ -95,8 +97,12 @@ docker compose -f infrastructure/docker-compose.yml --env-file infrastructure/.e
 | Santé Transfer | `GET /actuator/health` sur 8085 | `UP` |
 | Flyway Transfer | `docker exec banking-postgres-transfer psql -U transfer_user -d transfer_db -c '\dt'` | `transfers`, `transfer_status_history`, `flyway_schema_history` |
 | Flyway Account Sprint 6 | `docker exec banking-postgres-account psql -U account_user -d account_db -c '\dt'` | `external_accounts`, `external_account_credits` |
+| Santé Transaction | `GET /actuator/health` sur 8086 | `UP` |
+| Flyway Transaction | `docker exec banking-postgres-transaction psql -U transaction_user -d transaction_db -c '\dt'` | `transaction_records`, `transaction_entries`, `flyway_schema_history` |
 | Routes Gateway Sprint 6 | `GET http://localhost:8080/actuator/gateway/routes` | inclut `transfer-service` avec `/transfers/**` |
 | Eureka Sprint 6 | `GET http://localhost:8761/eureka/apps` | inclut `TRANSFER-SERVICE` |
+| Routes Gateway Sprint 7 | `GET http://localhost:8080/actuator/gateway/routes` | inclut `transaction-service` avec `/transactions/**` |
+| Eureka Sprint 7 | `GET http://localhost:8761/eureka/apps` | inclut `TRANSACTION-SERVICE` |
 | Création virement | `POST http://localhost:8080/transfers` avec `Bearer <jwt>` et `Idempotency-Key` | `201`, statut `COMPLETED`, compensation `NOT_REQUIRED` |
 | Double clic | même `Idempotency-Key` et même corps | `201`, même identifiant, un seul débit |
 | Clé réutilisée | même `Idempotency-Key`, montant différent | `409` |
@@ -104,5 +110,9 @@ docker compose -f infrastructure/docker-compose.yml --env-file infrastructure/.e
 | Bénéficiaire invalide | virement avec bénéficiaire `INACTIVE` | `201`, statut `FAILED`, aucun débit |
 | Échec crédit | crédit destination indisponible | `201`, statut `FAILED`, compensation `COMPLETED` |
 | Historique virement | `GET http://localhost:8080/transfers/{id}/history` avec `Bearer <jwt>` | `200`, transitions `REQUESTED`, `VALIDATING`, `PROCESSING`, `COMPLETED` ou `FAILED` |
+| Historique transactions | `GET http://localhost:8080/transactions?accountId=<id>&page=0` avec `Bearer <jwt>` | `200`, page triée par `occurredAt desc`, uniquement les transactions du client |
+| Détail transaction | `GET http://localhost:8080/transactions/{id}` avec `Bearer <jwt>` d'un autre client | `404` |
+| Doublon événement | `POST http://localhost:8086/internal/transactions` même `externalReference`, même corps | `200`, même transaction, aucune duplication |
+| Virement confirmé | `POST /transfers` réussi | transaction `TRANSFER`/`CONFIRMED` visible dans `/transactions` |
 
-Les vérifications ont été exécutées avec succès dans Docker les 21/11/2026, 22/11/2026 et 23/11/2026. Le 23/11/2026, la plateforme compte 13 conteneurs `Up` (12 healthy + `demo-service`), les tables `transfers`, `transfer_status_history`, `external_accounts` et `external_account_credits` sont présentes, la route Gateway `transfer-service` et l'enregistrement Eureka `TRANSFER-SERVICE` sont actifs. Parcours validés via `http://localhost:8080` : virement réussi `201`/`COMPLETED`, replay avec la même clé `201` et même identifiant, clé réutilisée avec un autre corps `409`, solde insuffisant `201`/`FAILED`, bénéficiaire `INACTIVE` `201`/`FAILED`, échec crédit destination `201`/`FAILED` avec compensation `COMPLETED`, absence de JWT `401`, clé manquante `400`, montant négatif `400`, liste `200`, détail `200` et historique à 4 transitions `200`. Frontend `200` et proxy `/transfers` sans token `401`. Détails : [auth-service.md](auth-service.md), [user-service.md](user-service.md), [account-service.md](account-service.md) et [transfer-service.md](transfer-service.md).
+Les vérifications ont été exécutées avec succès dans Docker les 21/11/2026, 22/11/2026 et 23/11/2026. Le 23/11/2026, la plateforme compte 15 conteneurs `Up` (14 healthy + `demo-service`), les tables `transfers`, `transfer_status_history`, `external_accounts`, `external_account_credits`, `transaction_records` et `transaction_entries` sont présentes, les routes Gateway `transfer-service`/`transaction-service` et les enregistrements Eureka `TRANSFER-SERVICE`/`TRANSACTION-SERVICE` sont actifs. Parcours validés via `http://localhost:8080` : virement réussi `201`/`COMPLETED` avec transaction `TRANSFER` confirmée, replay idempotent même clé `201` même identifiant, conflit de clé `409`, solde insuffisant `FAILED`, bénéficiaire inactif `FAILED`, échec de crédit avec compensation `COMPLETED` et `REVERSAL` enregistrée, historique transactions filtré par compte/pagination `200`, détail autre client `404`, doublon interne même `externalReference` sans duplication. Frontend `200` et proxy `/transactions` sans token `401`. Détails : [auth-service.md](auth-service.md), [user-service.md](user-service.md), [account-service.md](account-service.md), [transfer-service.md](transfer-service.md) et [transaction-service.md](transaction-service.md).

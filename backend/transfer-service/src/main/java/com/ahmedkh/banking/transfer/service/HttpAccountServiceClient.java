@@ -6,6 +6,7 @@ import com.ahmedkh.banking.transfer.dto.InternalAccountResponse;
 import com.ahmedkh.banking.transfer.dto.InternalAmountRequest;
 import com.ahmedkh.banking.transfer.dto.InternalExternalCreditRequest;
 import com.ahmedkh.banking.transfer.dto.InternalExternalCreditResponse;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -30,7 +31,7 @@ public class HttpAccountServiceClient implements AccountServiceClient {
     private final long retryDelayMs;
 
     public HttpAccountServiceClient(
-            RestClient restClient,
+            @Qualifier("accountRestClient") RestClient restClient,
             @Value("${app.account-service.base-url}") String baseUrl,
             @Value("${app.account-service.internal-token}") String internalToken,
             @Value("${app.account-service.retry-attempts}") int retryAttempts,

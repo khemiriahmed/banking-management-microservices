@@ -22,6 +22,10 @@ spring:
               uri: lb://TRANSFER-SERVICE
               predicates:
                 - Path=/transfers/**
+            - id: transaction-service
+              uri: lb://TRANSACTION-SERVICE
+              predicates:
+                - Path=/transactions/**
             - id: user-service
               uri: lb://USER-SERVICE
               predicates:

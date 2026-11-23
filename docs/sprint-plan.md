@@ -11,7 +11,7 @@ Objectif : un sprint traité par jour ouvré. Les sprints longs du cahier des ch
 | J5 | 4 — Accounts | Comptes, soldes `BigDecimal`, statuts | S3 | Terminé |
 | J6 | 5 — Beneficiaries | CRUD bénéficiaires isolés par client | S4 | Terminé |
 | J7-8 | 6 — Transfers | Saga, compensation, idempotence | S4-S5 | Terminé |
-| J9 | 7 — Transactions | Historique paginé et sécurisé | S6 | À faire |
+| J9 | 7 — Transactions | Historique paginé et sécurisé | S6 | Terminé |
 | J10 | 8 — Events | RabbitMQ, notifications, audit | S6-S7 | À faire |
 | J11-12 | 9 — Angular | Parcours CLIENT et ADMIN complets | APIs stables | À faire |
 | J13 | 10 — Docker | `docker compose up --build` | S9 | Anticipé en S2/S3 |
@@ -125,6 +125,20 @@ Branche dédiée : `sprint/05-beneficiaries`, conservée après merge dans `deve
 - [x] 6.11 — Tests : 23 tests `transfer-service` verts (Saga, compensation, idempotence, retry HTTP, intégration MockMvc/H2), 28 tests `account-service` verts, 8 tests Angular verts.
 
 Branche dédiée : `sprint/06-transfers`, conservée après merge dans `develop`. Détails : [transfer-service.md](transfer-service.md).
+
+## Détail du Sprint 7 (terminé)
+
+- [x] 7.1 — `transaction-service` : Spring Boot 3.5.16, Java 17, Spring Cloud Config/Eureka, PostgreSQL, Flyway, JWT local, Maven Wrapper, Dockerfile, port `8086`.
+- [x] 7.2 — Migration `V1__create_transactions.sql` : `transaction_records`, `transaction_entries`, index propriétaire/compte/date, unicité `external_reference`.
+- [x] 7.3 — Modèle : `TransactionRecord` + `TransactionEntry` avec référence externe, compte concerné ou référence destination externe, type `TRANSFER`/`REVERSAL`, sens `DEBIT`/`CREDIT`, montant/devise, date et statut `CONFIRMED`.
+- [x] 7.4 — Endpoints client `GET /transactions?accountId=&from=&to=&page=` et `GET /transactions/{id}` filtrés par `sub` du JWT, tri par date décroissante, pagination plafonnée.
+- [x] 7.5 — Endpoint interne `POST /internal/transactions` protégé par `X-Internal-Service-Token`, idempotent par `externalReference` (doublons ignorés sans doublon DB).
+- [x] 7.6 — Intégration `transfer-service` : enregistrement d'une transaction `TRANSFER` confirmée après succès et d'une `REVERSAL` après compensation source réussie.
+- [x] 7.7 — Infra : `postgres-transaction`, `transaction-service`, route Gateway `/transactions/**`, proxy Angular/Nginx, variables `TRANSACTION_DB_*`.
+- [x] 7.8 — UI Angular : historique transactions filtrable par compte, affichage type/montant/statut/date/écritures.
+- [x] 7.9 — Tests : 8 tests `transaction-service` verts, 24 tests `transfer-service` verts (dont client HTTP transaction), 9 tests Angular verts ; validation Docker complète.
+
+Branche dédiée : `sprint/07-transaction-service`, conservée après merge dans `develop`. Détails : [transaction-service.md](transaction-service.md).
 
 ## Règle de passage au sprint suivant
 

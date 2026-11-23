@@ -8,6 +8,7 @@ import com.ahmedkh.banking.transfer.repository.TransferRepository;
 import com.ahmedkh.banking.transfer.repository.TransferStatusHistoryRepository;
 import com.ahmedkh.banking.transfer.security.TestJwtFactory;
 import com.ahmedkh.banking.transfer.service.AccountServiceClient;
+import com.ahmedkh.banking.transfer.service.TransactionServiceClient;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -62,6 +63,9 @@ class TransferIntegrationTest {
 
     @MockitoBean
     private AccountServiceClient client;
+
+    @MockitoBean
+    private TransactionServiceClient transactionClient;
 
     private UUID owner;
     private UUID sourceAccountId;

@@ -3,6 +3,8 @@ import { Account } from './account.model';
 import { AccountService } from './account.service';
 import { Beneficiary } from './beneficiary.model';
 import { BeneficiaryService } from './beneficiary.service';
+import { TransactionRecord } from './transaction.model';
+import { TransactionService } from './transaction.service';
 import { Transfer } from './transfer.model';
 import { TransferService } from './transfer.service';
 import { AuthService } from './auth.service';
@@ -20,8 +22,10 @@ export class AppComponent {
   beneficiaryName = '';
   beneficiaryReference = '';
   transfers: Transfer[] = [];
+  transactions: TransactionRecord[] = [];
   selectedSourceAccountId = '';
   selectedBeneficiaryId = '';
+  selectedTransactionAccountId = '';
   transferAmount: number | null = null;
   transferCurrency = 'EUR';
   transferReason = '';
@@ -32,7 +36,8 @@ export class AppComponent {
     private readonly auth: AuthService,
     private readonly accountService: AccountService,
     private readonly beneficiaryService: BeneficiaryService,
-    private readonly transferService: TransferService
+    private readonly transferService: TransferService,
+    private readonly transactionService: TransactionService
   ) {}
 
   get authenticated(): boolean {
@@ -49,6 +54,7 @@ export class AppComponent {
         this.loadAccounts();
         this.loadBeneficiaries();
         this.loadTransfers();
+        this.loadTransactions();
       },
       error: () => {
         this.isLoading = false;
@@ -71,6 +77,9 @@ export class AppComponent {
         if (!this.selectedSourceAccountId && accounts.length > 0) {
           this.selectedSourceAccountId = accounts[0].id;
           this.transferCurrency = accounts[0].currency;
+        }
+        if (!this.selectedTransactionAccountId && accounts.length > 0) {
+          this.selectedTransactionAccountId = accounts[0].id;
         }
         this.isLoading = false;
       },
@@ -117,6 +126,24 @@ export class AppComponent {
     });
   }
 
+  loadTransactions(): void {
+    if (!this.authenticated) {
+      return;
+    }
+    this.errorMessage = '';
+    this.transactionService.getTransactions({
+      accountId: this.selectedTransactionAccountId || undefined
+    }).subscribe({
+      next: (page) => {
+        this.transactions = page.content;
+      },
+      error: () => {
+        this.transactions = [];
+        this.errorMessage = 'Impossible de charger les transactions.';
+      }
+    });
+  }
+
   createTransfer(): void {
     if (
       !this.authenticated ||
@@ -140,6 +167,7 @@ export class AppComponent {
         this.transferAmount = null;
         this.transferReason = '';
         this.loadTransfers();
+        this.loadTransactions();
       },
       error: () => {
         this.errorMessage = 'Impossible de creer le virement.';
@@ -198,8 +226,10 @@ export class AppComponent {
     this.beneficiaryName = '';
     this.beneficiaryReference = '';
     this.transfers = [];
+    this.transactions = [];
     this.selectedSourceAccountId = '';
     this.selectedBeneficiaryId = '';
+    this.selectedTransactionAccountId = '';
     this.transferAmount = null;
     this.transferCurrency = 'EUR';
     this.transferReason = '';
