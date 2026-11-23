@@ -77,9 +77,21 @@ describe('AppComponent', () => {
       createdAt: '2026-01-01T10:00:00Z'
     }]);
 
+    const transfersRequest = httpController.expectOne('/transfers?page=0&size=20');
+    expect(transfersRequest.request.method).toBe('GET');
+    expect(transfersRequest.request.headers.get('Authorization')).toBe('Bearer test-token');
+    transfersRequest.flush({
+      content: [],
+      page: 0,
+      size: 20,
+      totalElements: 0,
+      last: true
+    });
+
     expect(component.authenticated).toBeTrue();
     expect(component.accounts.length).toBe(1);
     expect(component.beneficiaries.length).toBe(1);
+    expect(component.transfers.length).toBe(0);
   });
 
   it('creates a beneficiary and refreshes the masked list', () => {
@@ -119,6 +131,53 @@ describe('AppComponent', () => {
     expect(component.beneficiaryName).toBe('');
   });
 
+  it('creates a transfer with an idempotency key and refreshes the list', () => {
+    localStorage.setItem('banking-access-token', 'test-token');
+    component.selectedSourceAccountId = 'e4d4f0c8-0b1e-4f6a-9e7a-1b6f0f8d6c11';
+    component.selectedBeneficiaryId = 'd0e1f2a3-4b5c-4d6e-8f90-1a2b3c4d5e6f';
+    component.transferAmount = 12.5;
+    component.transferCurrency = 'EUR';
+    component.transferReason = 'facture';
+
+    component.createTransfer();
+
+    const createRequest = httpController.expectOne('/transfers');
+    expect(createRequest.request.method).toBe('POST');
+    expect(createRequest.request.headers.get('Idempotency-Key')).toBeTruthy();
+    expect(createRequest.request.body).toEqual({
+      sourceAccountId: 'e4d4f0c8-0b1e-4f6a-9e7a-1b6f0f8d6c11',
+      beneficiaryId: 'd0e1f2a3-4b5c-4d6e-8f90-1a2b3c4d5e6f',
+      amount: 12.5,
+      currency: 'EUR',
+      reason: 'facture'
+    });
+    createRequest.flush({
+      id: 'a6d1b1c2-3d4e-5f60-7a81-92b3c4d5e6f7',
+      status: 'COMPLETED'
+    });
+
+    const listRequest = httpController.expectOne('/transfers?page=0&size=20');
+    listRequest.flush({
+      content: [{
+        id: 'a6d1b1c2-3d4e-5f60-7a81-92b3c4d5e6f7',
+        status: 'COMPLETED',
+        amount: 12.5,
+        currency: 'EUR',
+        destinationReference: 'FR76 **** **** **** 1234',
+        compensationStatus: 'NOT_REQUIRED',
+        createdAt: '2026-01-01T10:00:00Z'
+      }],
+      page: 0,
+      size: 20,
+      totalElements: 1,
+      last: true
+    });
+
+    expect(component.transfers.length).toBe(1);
+    expect(component.transferAmount).toBeNull();
+    expect(component.transferReason).toBe('');
+  });
+
   it('clears the session on logout', () => {
     localStorage.setItem('banking-access-token', 'test-token');
 
@@ -127,6 +186,8 @@ describe('AppComponent', () => {
     expect(component.authenticated).toBeFalse();
     expect(component.accounts.length).toBe(0);
     expect(component.beneficiaries.length).toBe(0);
+    expect(component.transfers.length).toBe(0);
+    expect(component.selectedSourceAccountId).toBe('');
     expect(localStorage.getItem('banking-access-token')).toBeNull();
   });
 });

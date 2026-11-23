@@ -52,6 +52,23 @@ services:
       timeout: 5s
       retries: 20
 
+  postgres-transfer:
+    image: postgres:16-alpine
+    container_name: banking-postgres-transfer
+    environment:
+      POSTGRES_DB: ${TRANSFER_DB_NAME:-transfer_db}
+      POSTGRES_USER: ${TRANSFER_DB_USER:-transfer_user}
+      POSTGRES_PASSWORD: ${TRANSFER_DB_PASSWORD:?TRANSFER_DB_PASSWORD is required}
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres-transfer-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${TRANSFER_DB_USER:-transfer_user} -d ${TRANSFER_DB_NAME:-transfer_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
   config-server:
     build: ../backend/config-server
     container_name: banking-config-server
@@ -192,6 +209,39 @@ services:
       timeout: 5s
       retries: 30
 
+  transfer-service:
+    build: ../backend/transfer-service
+    container_name: banking-transfer-service
+    ports:
+      - "8085:8085"
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_URI: http://discovery-server:8761/eureka/
+      TRANSFER_DB_URL: jdbc:postgresql://postgres-transfer:5432/${TRANSFER_DB_NAME:-transfer_db}
+      TRANSFER_DB_USER: ${TRANSFER_DB_USER:-transfer_user}
+      TRANSFER_DB_PASSWORD: ${TRANSFER_DB_PASSWORD:?TRANSFER_DB_PASSWORD is required}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?INTERNAL_SERVICE_TOKEN is required}
+      ACCOUNT_SERVICE_URL: http://account-service:8084
+      ACCOUNT_CONNECT_TIMEOUT_MS: ${ACCOUNT_CONNECT_TIMEOUT_MS:-2000}
+      ACCOUNT_READ_TIMEOUT_MS: ${ACCOUNT_READ_TIMEOUT_MS:-3000}
+      ACCOUNT_RETRY_ATTEMPTS: ${ACCOUNT_RETRY_ATTEMPTS:-2}
+      ACCOUNT_RETRY_DELAY_MS: ${ACCOUNT_RETRY_DELAY_MS:-100}
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      postgres-transfer:
+        condition: service_healthy
+      account-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:8085/actuator/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
   frontend:
     build: ../frontend
     container_name: banking-frontend
@@ -210,3 +260,4 @@ volumes:
   postgres-auth-data:
   postgres-user-data:
   postgres-account-data:
+  postgres-transfer-data:

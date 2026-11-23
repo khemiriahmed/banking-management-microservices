@@ -43,9 +43,10 @@ Port : `8084` (direct) / `8080/accounts/**`, `8080/admin/accounts/**` et `8080/b
 | `POST` | `/internal/accounts/{id}/debit` | `X-Internal-Service-Token` | `200` + soldes internes |
 | `POST` | `/internal/accounts/{id}/credit` | `X-Internal-Service-Token` | `200` + soldes internes |
 | `POST` | `/internal/accounts/{id}/release` | `X-Internal-Service-Token` | `200` + soldes internes |
+| `POST` | `/internal/accounts/external-credit` | `X-Internal-Service-Token` | `200` + crédit idempotent, `alreadyProcessed` |
 | `GET` | `/actuator/health` | public | `UP` |
 
-Les routes `/internal/**` ne sont pas exposées par le Gateway : elles sont accessibles uniquement depuis le réseau interne via le port `8084`. Le corps des opérations internes contient `amount` et `currency`.
+Les routes `/internal/**` ne sont pas exposées par le Gateway : elles sont accessibles uniquement depuis le réseau interne via le port `8084`. Le corps des opérations internes contient `amount` et `currency`. Le crédit externe contient aussi `operationId` et `destinationReference`; `operationId` est la clé d'idempotence et la référence de destination est masquée avant stockage.
 
 Codes d'erreur JSON : `400` validation/montant/référence invalide, `401` JWT ou token interne absent/invalide, `403` rôle insuffisant, `404` compte ou bénéficiaire introuvable ou autre client, `409` conflit métier/concurrence/doublon, `500` erreur inattendue.
 
@@ -71,9 +72,9 @@ Codes d'erreur JSON : `400` validation/montant/référence invalide, `401` JWT o
 $env:JAVA_HOME='C:\Users\Ahmed\AppData\Local\Temp\opencode\toolchain\jdk-17.0.21+9'; $env:PATH="$env:JAVA_HOME\bin;C:\Users\Ahmed\AppData\Local\Temp\opencode\toolchain\apache-maven-3.9.16\bin;$env:PATH"; mvn -B -f backend/account-service/pom.xml test
 ```
 
-Couverture : `JwtTokenVerifierTest` (claims, expiration, subject invalide), `AccountServiceTest` et `AccountServiceIntegrationTest` (Sprint 4), `BeneficiaryServiceTest` (validation, unicité, propriété, mapping) et `BeneficiaryIntegrationTest` (CRUD via MockMvc, isolation entre clients, référence masquée, doublon `409`, entrées invalides `400`, H2 + Flyway). 25 tests verts.
+Couverture : `JwtTokenVerifierTest` (claims, expiration, subject invalide), `AccountServiceTest` et `AccountServiceIntegrationTest` (Sprint 4), `BeneficiaryServiceTest` (validation, unicité, propriété, mapping), `BeneficiaryIntegrationTest` (CRUD via MockMvc, isolation entre clients, référence masquée, doublon `409`, entrées invalides `400`, H2 + Flyway) et crédit externe idempotent via `V3__create_external_accounts.sql`, `ExternalAccount`, `ExternalAccountCredit` et `/internal/accounts/external-credit`. 28 tests verts.
 
-Les tests Angular correspondants (`BeneficiaryService`, `AppComponent`) sont exécutés dans `node:18-alpine` avec Chromium headless : 7 tests verts.
+Les tests Angular correspondants (`BeneficiaryService`, `TransferService`, `AppComponent`) sont exécutés dans `node:18-alpine` avec Chromium headless : 8 tests verts.
 
 ## Validation Docker effectuée
 
@@ -82,4 +83,4 @@ docker compose -f infrastructure/docker-compose.yml --env-file infrastructure/.e
 docker compose -f infrastructure/docker-compose.yml --env-file infrastructure/.env up -d --build
 ```
 
-Résultats le 22/11/2026 : 11 conteneurs `Up`, healths `UP` pour les conteneurs instrumentés, tables `bank_accounts`, `beneficiaries` et `flyway_schema_history` dans `account_db`, route Gateway `account-service` avec prédicat `/accounts/**,/admin/accounts/**,/beneficiaries/**`, Eureka `ACCOUNT-SERVICE`. Parcours bénéficiaires validé via `http://localhost:8080` : inscription de deux clients `201`, création `201` avec référence masquée et statut `ACTIVE`, liste `200`, doublon `409`, référence non masquée `400`, lecture par un autre client `404`, mise à jour `200` avec statut `INACTIVE`, suppression `204`, lecture après suppression `404`. Frontend `http://localhost:4200/` `200` et proxy `/auth/me` sans token `401`.
+Résultats le 22/11/2026 puis complément le 23/11/2026 : 13 conteneurs `Up`, healths `UP` pour les conteneurs instrumentés, tables `bank_accounts`, `beneficiaries`, `external_accounts`, `external_account_credits` et `flyway_schema_history` dans `account_db`, route Gateway `account-service` avec prédicat `/accounts/**,/admin/accounts/**,/beneficiaries/**`, Eureka `ACCOUNT-SERVICE`. Parcours bénéficiaires validé via `http://localhost:8080` : inscription de deux clients `201`, création `201` avec référence masquée et statut `ACTIVE`, liste `200`, doublon `409`, référence non masquée `400`, lecture par un autre client `404`, mise à jour `200` avec statut `INACTIVE`, suppression `204`, lecture après suppression `404`. Le crédit externe idempotent a aussi été validé indirectement par la Saga de virement : échec de devise côté destination puis compensation par crédit source. Frontend `http://localhost:4200/` `200` et proxy `/auth/me` sans token `401`.

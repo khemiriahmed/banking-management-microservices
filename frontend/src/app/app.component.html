@@ -108,4 +108,74 @@
 
     <p *ngIf="beneficiaries.length === 0">Aucun beneficiaire enregistre.</p>
   </section>
+
+  <section class="card transfer-card" *ngIf="authenticated">
+    <div class="toolbar">
+      <h2>Virements</h2>
+      <button type="button" (click)="loadTransfers()">Rafraichir</button>
+    </div>
+
+    <form (ngSubmit)="createTransfer()">
+      <label>
+        Compte a debiter
+        <select name="transferSource" [(ngModel)]="selectedSourceAccountId" required>
+          <option *ngFor="let account of accounts" [value]="account.id">
+            {{ account.accountNumberMasked }} - {{ account.currency }}
+          </option>
+        </select>
+      </label>
+      <label>
+        Beneficiaire
+        <select name="transferBeneficiary" [(ngModel)]="selectedBeneficiaryId" required>
+          <option *ngFor="let beneficiary of beneficiaries" [value]="beneficiary.id">
+            {{ beneficiary.displayName }} - {{ beneficiary.destinationAccountReference }}
+          </option>
+        </select>
+      </label>
+      <label>
+        Montant
+        <input name="transferAmount" type="number" min="0.01" step="0.01" [(ngModel)]="transferAmount" required>
+      </label>
+      <label>
+        Devise
+        <select name="transferCurrency" [(ngModel)]="transferCurrency" required>
+          <option value="EUR">EUR</option>
+          <option value="USD">USD</option>
+        </select>
+      </label>
+      <label>
+        Motif
+        <input name="transferReason" [(ngModel)]="transferReason" maxlength="255">
+      </label>
+      <button type="submit">Virer</button>
+    </form>
+
+    <table *ngIf="transfers.length > 0">
+      <thead>
+        <tr>
+          <th>Reference</th>
+          <th>Statut</th>
+          <th>Montant</th>
+          <th>Destination</th>
+          <th>Compensation</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let transfer of transfers">
+          <td>{{ transfer.id }}</td>
+          <td>
+            {{ transfer.status }}
+            <span class="failure" *ngIf="transfer.failureReason">{{ transfer.failureReason }}</span>
+          </td>
+          <td>{{ transfer.amount }} {{ transfer.currency }}</td>
+          <td>{{ transfer.destinationReference }}</td>
+          <td>{{ transfer.compensationStatus }}</td>
+          <td>{{ transfer.createdAt }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p *ngIf="transfers.length === 0">Aucun virement enregistre.</p>
+  </section>
 </main>
