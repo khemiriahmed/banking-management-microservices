@@ -1,6 +1,8 @@
 package com.ahmedkh.banking.account.integration;
 
 import com.ahmedkh.banking.account.repository.BankAccountRepository;
+import com.ahmedkh.banking.account.repository.ExternalAccountCreditRepository;
+import com.ahmedkh.banking.account.repository.ExternalAccountRepository;
 import com.ahmedkh.banking.account.security.InternalTokenFilter;
 import com.ahmedkh.banking.account.security.TestJwtFactory;
 import com.ahmedkh.banking.account.service.AccountService;
@@ -51,10 +53,18 @@ class AccountServiceIntegrationTest {
     private BankAccountRepository repository;
 
     @Autowired
+    private ExternalAccountRepository externalAccountRepository;
+
+    @Autowired
+    private ExternalAccountCreditRepository externalCreditRepository;
+
+    @Autowired
     private AccountService service;
 
     @BeforeEach
     void cleanDatabase() {
+        externalCreditRepository.deleteAll();
+        externalAccountRepository.deleteAll();
         repository.deleteAll();
     }
 
@@ -193,6 +203,29 @@ class AccountServiceIntegrationTest {
         } finally {
             executor.shutdownNow();
         }
+    }
+
+    @Test
+    void externalCreditIsIdempotentForInternalCallers() throws Exception {
+        String body = """
+                {"destinationReference":"FR76 **** **** **** 1234","amount":10.00,"currency":"EUR","operationId":"credit-op"}
+                """;
+
+        mockMvc.perform(post("/internal/accounts/external-credit")
+                        .header(InternalTokenFilter.TOKEN_HEADER, INTERNAL_TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.balance").value(10.00))
+                .andExpect(jsonPath("$.alreadyProcessed").value(false));
+
+        mockMvc.perform(post("/internal/accounts/external-credit")
+                        .header(InternalTokenFilter.TOKEN_HEADER, INTERNAL_TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.balance").value(10.00))
+                .andExpect(jsonPath("$.alreadyProcessed").value(true));
     }
 
     private String createAccount(UUID ownerUserId, String currency, String initialBalance) throws Exception {

@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: transfer-service
+  config:
+    import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
+  datasource:
+    url: ${TRANSFER_DB_URL:jdbc:postgresql://localhost:5435/transfer_db}
+    username: ${TRANSFER_DB_USER:transfer_user}
+    password: ${TRANSFER_DB_PASSWORD:}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+
+server:
+  port: ${TRANSFER_SERVICE_PORT:8085}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka/}
+    registry-fetch-interval-seconds: 5
+  instance:
+    prefer-ip-address: true
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+  account-service:
+    base-url: ${ACCOUNT_SERVICE_URL:http://localhost:8084}
+    internal-token: ${INTERNAL_SERVICE_TOKEN}
+    connect-timeout-ms: ${ACCOUNT_CONNECT_TIMEOUT_MS:2000}
+    read-timeout-ms: ${ACCOUNT_READ_TIMEOUT_MS:3000}
+    retry-attempts: ${ACCOUNT_RETRY_ATTEMPTS:2}
+    retry-delay-ms: ${ACCOUNT_RETRY_DELAY_MS:100}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
