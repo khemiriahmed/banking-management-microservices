@@ -69,6 +69,23 @@ services:
       timeout: 5s
       retries: 20
 
+  postgres-transaction:
+    image: postgres:16-alpine
+    container_name: banking-postgres-transaction
+    environment:
+      POSTGRES_DB: ${TRANSACTION_DB_NAME:-transaction_db}
+      POSTGRES_USER: ${TRANSACTION_DB_USER:-transaction_user}
+      POSTGRES_PASSWORD: ${TRANSACTION_DB_PASSWORD:?TRANSACTION_DB_PASSWORD is required}
+    ports:
+      - "5436:5432"
+    volumes:
+      - postgres-transaction-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${TRANSACTION_DB_USER:-transaction_user} -d ${TRANSACTION_DB_NAME:-transaction_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
   config-server:
     build: ../backend/config-server
     container_name: banking-config-server
@@ -209,6 +226,32 @@ services:
       timeout: 5s
       retries: 30
 
+  transaction-service:
+    build: ../backend/transaction-service
+    container_name: banking-transaction-service
+    ports:
+      - "8086:8086"
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_URI: http://discovery-server:8761/eureka/
+      TRANSACTION_DB_URL: jdbc:postgresql://postgres-transaction:5432/${TRANSACTION_DB_NAME:-transaction_db}
+      TRANSACTION_DB_USER: ${TRANSACTION_DB_USER:-transaction_user}
+      TRANSACTION_DB_PASSWORD: ${TRANSACTION_DB_PASSWORD:?TRANSACTION_DB_PASSWORD is required}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?INTERNAL_SERVICE_TOKEN is required}
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      postgres-transaction:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:8086/actuator/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
   transfer-service:
     build: ../backend/transfer-service
     container_name: banking-transfer-service
@@ -227,6 +270,9 @@ services:
       ACCOUNT_READ_TIMEOUT_MS: ${ACCOUNT_READ_TIMEOUT_MS:-3000}
       ACCOUNT_RETRY_ATTEMPTS: ${ACCOUNT_RETRY_ATTEMPTS:-2}
       ACCOUNT_RETRY_DELAY_MS: ${ACCOUNT_RETRY_DELAY_MS:-100}
+      TRANSACTION_SERVICE_URL: http://transaction-service:8086
+      TRANSACTION_CONNECT_TIMEOUT_MS: ${TRANSACTION_CONNECT_TIMEOUT_MS:-2000}
+      TRANSACTION_READ_TIMEOUT_MS: ${TRANSACTION_READ_TIMEOUT_MS:-3000}
     depends_on:
       config-server:
         condition: service_healthy
@@ -235,6 +281,8 @@ services:
       postgres-transfer:
         condition: service_healthy
       account-service:
+        condition: service_healthy
+      transaction-service:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget --spider -q http://localhost:8085/actuator/health"]
@@ -250,6 +298,8 @@ services:
     depends_on:
       api-gateway:
         condition: service_healthy
+      transaction-service:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget --spider -q http://127.0.0.1/"]
       interval: 5s
@@ -261,3 +311,4 @@ volumes:
   postgres-user-data:
   postgres-account-data:
   postgres-transfer-data:
+  postgres-transaction-data:
