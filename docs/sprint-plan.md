@@ -10,7 +10,7 @@ Objectif : un sprint traité par jour ouvré. Les sprints longs du cahier des ch
 | J4 | 3 — Users | Profil client sécurisé, rôles | S2 | Terminé |
 | J5 | 4 — Accounts | Comptes, soldes `BigDecimal`, statuts | S3 | Terminé |
 | J6 | 5 — Beneficiaries | CRUD bénéficiaires isolés par client | S4 | Terminé |
-| J7-8 | 6 — Transfers | Saga, compensation, idempotence | S4-S5 | À faire |
+| J7-8 | 6 — Transfers | Saga, compensation, idempotence | S4-S5 | Terminé |
 | J9 | 7 — Transactions | Historique paginé et sécurisé | S6 | À faire |
 | J10 | 8 — Events | RabbitMQ, notifications, audit | S6-S7 | À faire |
 | J11-12 | 9 — Angular | Parcours CLIENT et ADMIN complets | APIs stables | À faire |
@@ -109,6 +109,22 @@ Branche dédiée : `chore/backend-frontend-docker`.
 - [x] 5.8 — Tests unitaires + intégration H2/Flyway : 25 tests backend verts, 7 tests Angular verts, validation Docker complète (voir [account-service.md](account-service.md)).
 
 Branche dédiée : `sprint/05-beneficiaries`, conservée après merge dans `develop`.
+
+## Détail du Sprint 6 (terminé)
+
+- [x] 6.1 — `transfer-service` : Spring Boot 3.5.16, Java 17, Spring Cloud Config/Eureka, PostgreSQL, Flyway, JWT local, Maven Wrapper, Dockerfile, port `8085`.
+- [x] 6.2 — Migration `V1__create_transfers.sql` : `transfers`, `transfer_status_history`, `@Version`, index propriétaire/statut, unicité `(owner_user_id, idempotency_key)`.
+- [x] 6.3 — Entités `Transfer`, `TransferStatusHistory`, enums `TransferStatus` (`REQUESTED`, `VALIDATING`, `PROCESSING`, `COMPLETED`, `FAILED`) et `CompensationStatus`.
+- [x] 6.4 — Endpoints `POST /transfers` avec `Idempotency-Key`, `GET /transfers`, `GET /transfers/{id}` et `GET /transfers/{id}/history`, tous filtrés par le `sub` du JWT.
+- [x] 6.5 — Idempotence par empreinte SHA-256 de la requête : replay de la même clé, `409` si la clé est réutilisée avec un payload différent, gestion du concours par contrainte unique.
+- [x] 6.6 — Saga : validation compte source et bénéficiaire, réservation, débit, crédit destination idempotent via `/internal/accounts/external-credit`, compensation par `release` ou `creditSource`.
+- [x] 6.7 — Retry limité aux `GET` de validation ; aucune répétition aveugle des appels mutants ; timeouts configurables via variables d'environnement.
+- [x] 6.8 — Extension `account-service` : `V3__create_external_accounts.sql`, tables `external_accounts` et `external_account_credits`, opération idempotente par `operationId`.
+- [x] 6.9 — Route Gateway `/transfers/**` vers `lb://TRANSFER-SERVICE`, conteneurs `postgres-transfer` et `transfer-service`, proxy Angular et Nginx mis à jour.
+- [x] 6.10 — UI Angular : formulaire de virement avec sélection compte/bénéficiaire, montant `BigDecimal` côté backend, devise, motif, liste des virements et statut de compensation.
+- [x] 6.11 — Tests : 23 tests `transfer-service` verts (Saga, compensation, idempotence, retry HTTP, intégration MockMvc/H2), 28 tests `account-service` verts, 8 tests Angular verts.
+
+Branche dédiée : `sprint/06-transfers`, conservée après merge dans `develop`. Détails : [transfer-service.md](transfer-service.md).
 
 ## Règle de passage au sprint suivant
 

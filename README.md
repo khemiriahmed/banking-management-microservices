@@ -96,7 +96,7 @@ Lancer toute la plateforme avec Docker (mode retenu) :
 
 ```powershell
 copy infrastructure\.env.example infrastructure\.env
-# renseigner AUTH_DB_PASSWORD, USER_DB_PASSWORD, ACCOUNT_DB_PASSWORD, JWT_SECRET et INTERNAL_SERVICE_TOKEN
+# renseigner AUTH_DB_PASSWORD, USER_DB_PASSWORD, ACCOUNT_DB_PASSWORD, TRANSFER_DB_PASSWORD, JWT_SECRET et INTERNAL_SERVICE_TOKEN
 docker compose -f infrastructure/docker-compose.yml --env-file infrastructure/.env up -d --build
 ```
 
@@ -106,7 +106,7 @@ Détails des services et vérifications : [docs/ports-and-services.md](docs/port
 
 ## Sprints
 
-Feuille de route détaillée : [docs/sprint-plan.md](docs/sprint-plan.md). Statut actuel : **Sprint 5 terminé, Sprint 6 à démarrer**.
+Feuille de route détaillée : [docs/sprint-plan.md](docs/sprint-plan.md). Statut actuel : **Sprint 6 terminé, Sprint 7 à démarrer**.
 
 ## Sécurité et qualité
 
@@ -115,4 +115,4 @@ Feuille de route détaillée : [docs/sprint-plan.md](docs/sprint-plan.md). Statu
 - Aucune base partagée entre services, aucun secret commité, aucun token dans les logs.
 - `BigDecimal` uniquement pour l'argent, Saga + idempotence pour les virements.
 
-Voir aussi : [architecture](docs/architecture-overview.md) · [ports et services](docs/ports-and-services.md) · [auth service](docs/auth-service.md) · [user service](docs/user-service.md) · [account service](docs/account-service.md) · [cahier des charges PDF](docs/Cahier_des_charges_Banking_Microservices_AhmedKH_v2_Sprints_Detailles.pdf).
+Voir aussi : [architecture](docs/architecture-overview.md) · [ports et services](docs/ports-and-services.md) · [auth service](docs/auth-service.md) · [user service](docs/user-service.md) · [account service](docs/account-service.md) · [transfer service](docs/transfer-service.md) · [cahier des charges PDF](docs/Cahier_des_charges_Banking_Microservices_AhmedKH_v2_Sprints_Detailles.pdf).
