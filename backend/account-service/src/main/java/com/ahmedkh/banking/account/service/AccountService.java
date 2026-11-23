@@ -3,14 +3,20 @@ package com.ahmedkh.banking.account.service;
 import com.ahmedkh.banking.account.dto.AccountResponse;
 import com.ahmedkh.banking.account.dto.CreateAccountRequest;
 import com.ahmedkh.banking.account.dto.InternalAccountResponse;
+import com.ahmedkh.banking.account.dto.InternalExternalCreditRequest;
+import com.ahmedkh.banking.account.dto.InternalExternalCreditResponse;
 import com.ahmedkh.banking.account.dto.UpdateAccountStatusRequest;
 import com.ahmedkh.banking.account.entity.AccountStatus;
 import com.ahmedkh.banking.account.entity.BankAccount;
+import com.ahmedkh.banking.account.entity.ExternalAccount;
+import com.ahmedkh.banking.account.entity.ExternalAccountCredit;
 import com.ahmedkh.banking.account.exception.AccountNotFoundException;
 import com.ahmedkh.banking.account.exception.CurrencyMismatchException;
 import com.ahmedkh.banking.account.exception.InsufficientBalanceException;
 import com.ahmedkh.banking.account.exception.InvalidAccountStateException;
 import com.ahmedkh.banking.account.repository.BankAccountRepository;
+import com.ahmedkh.banking.account.repository.ExternalAccountCreditRepository;
+import com.ahmedkh.banking.account.repository.ExternalAccountRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,9 +33,17 @@ public class AccountService {
     private static final BigDecimal ZERO = BigDecimal.ZERO.setScale(2);
 
     private final BankAccountRepository repository;
+    private final ExternalAccountRepository externalAccountRepository;
+    private final ExternalAccountCreditRepository externalCreditRepository;
 
-    public AccountService(BankAccountRepository repository) {
+    public AccountService(
+            BankAccountRepository repository,
+            ExternalAccountRepository externalAccountRepository,
+            ExternalAccountCreditRepository externalCreditRepository
+    ) {
         this.repository = repository;
+        this.externalAccountRepository = externalAccountRepository;
+        this.externalCreditRepository = externalCreditRepository;
     }
 
     @Transactional(readOnly = true)
@@ -105,6 +119,49 @@ public class AccountService {
     }
 
     @Transactional
+    public InternalExternalCreditResponse creditExternal(InternalExternalCreditRequest request) {
+        BigDecimal value = positiveMoney(request.amount());
+        String reference = maskedReference(request.destinationReference());
+        String currency = request.currency().toUpperCase(Locale.ROOT);
+
+        if (externalCreditRepository.existsByOperationId(request.operationId())) {
+            ExternalAccount processed = externalAccountRepository.findByDestinationReference(reference)
+                    .orElseThrow(AccountNotFoundException::new);
+            return new InternalExternalCreditResponse(
+                    processed.getId(),
+                    reference,
+                    processed.getBalance(),
+                    true
+            );
+        }
+
+        Instant now = Instant.now();
+        ExternalAccount account = externalAccountRepository.findByDestinationReference(reference)
+                .orElseGet(() -> new ExternalAccount(
+                        UUID.randomUUID(),
+                        reference,
+                        currency,
+                        ZERO,
+                        now,
+                        now
+                ));
+        if (!account.getCurrency().equals(currency)) {
+            throw new CurrencyMismatchException();
+        }
+        account.setBalance(account.getBalance().add(value));
+        account.setUpdatedAt(now);
+        externalAccountRepository.save(account);
+        externalCreditRepository.save(new ExternalAccountCredit(
+                request.operationId(),
+                account.getId(),
+                value,
+                currency,
+                now
+        ));
+        return new InternalExternalCreditResponse(account.getId(), reference, account.getBalance(), false);
+    }
+
+    @Transactional
     public InternalAccountResponse release(UUID accountId, BigDecimal amount, String currency) {
         BigDecimal value = positiveMoney(amount);
         BankAccount account = findUsableLocked(accountId, currency);
@@ -154,6 +211,13 @@ public class AccountService {
             throw new IllegalArgumentException("Amount must have at most two decimal places");
         }
         return amount.setScale(2, RoundingMode.UNNECESSARY);
+    }
+
+    private String maskedReference(String reference) {
+        if (reference == null || !reference.matches("FR76 \\*{4} \\*{4} \\*{4} \\d{4}")) {
+            throw new IllegalArgumentException("Destination reference must be masked");
+        }
+        return reference;
     }
 
     private String generateMaskedNumber() {

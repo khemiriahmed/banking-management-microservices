@@ -3,13 +3,18 @@ package com.ahmedkh.banking.account.service;
 import com.ahmedkh.banking.account.dto.AccountResponse;
 import com.ahmedkh.banking.account.dto.CreateAccountRequest;
 import com.ahmedkh.banking.account.dto.InternalAccountResponse;
+import com.ahmedkh.banking.account.dto.InternalExternalCreditRequest;
+import com.ahmedkh.banking.account.dto.InternalExternalCreditResponse;
 import com.ahmedkh.banking.account.entity.AccountStatus;
 import com.ahmedkh.banking.account.entity.AccountType;
 import com.ahmedkh.banking.account.entity.BankAccount;
+import com.ahmedkh.banking.account.entity.ExternalAccount;
 import com.ahmedkh.banking.account.exception.CurrencyMismatchException;
 import com.ahmedkh.banking.account.exception.InsufficientBalanceException;
 import com.ahmedkh.banking.account.exception.InvalidAccountStateException;
 import com.ahmedkh.banking.account.repository.BankAccountRepository;
+import com.ahmedkh.banking.account.repository.ExternalAccountCreditRepository;
+import com.ahmedkh.banking.account.repository.ExternalAccountRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -33,6 +38,12 @@ class AccountServiceTest {
 
     @Mock
     private BankAccountRepository repository;
+
+    @Mock
+    private ExternalAccountRepository externalAccountRepository;
+
+    @Mock
+    private ExternalAccountCreditRepository externalCreditRepository;
 
     @InjectMocks
     private AccountService service;
@@ -116,6 +127,47 @@ class AccountServiceTest {
         assertThatThrownBy(() -> service.reserve(id, new BigDecimal("1.234"), "EUR"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("two decimal places");
+    }
+
+    @Test
+    void externalCreditUsesTheSameBalanceForTheSameOperation() {
+        String reference = "FR76 **** **** **** 1234";
+        when(externalCreditRepository.existsByOperationId("credit-op")).thenReturn(true);
+        when(externalAccountRepository.findByDestinationReference(reference)).thenReturn(Optional.of(
+                new ExternalAccount(UUID.randomUUID(), reference, "EUR", new BigDecimal("40.00"), Instant.now(), Instant.now())
+        ));
+
+        InternalExternalCreditResponse response = service.creditExternal(new InternalExternalCreditRequest(
+                reference,
+                new BigDecimal("25.00"),
+                "EUR",
+                "credit-op"
+        ));
+
+        assertThat(response.alreadyProcessed()).isTrue();
+        assertThat(response.balance()).isEqualByComparingTo("40.00");
+        verify(externalAccountRepository, org.mockito.Mockito.never()).save(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void externalCreditCreatesAnExternalAccountAndAppliesTheAmount() {
+        String reference = "FR76 **** **** **** 4321";
+        when(externalCreditRepository.existsByOperationId("credit-new")).thenReturn(false);
+        when(externalAccountRepository.findByDestinationReference(reference)).thenReturn(Optional.empty());
+        when(externalAccountRepository.save(any(ExternalAccount.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        InternalExternalCreditResponse response = service.creditExternal(new InternalExternalCreditRequest(
+                reference,
+                new BigDecimal("15.50"),
+                "eur",
+                "credit-new"
+        ));
+
+        ArgumentCaptor<ExternalAccount> captor = ArgumentCaptor.forClass(ExternalAccount.class);
+        verify(externalAccountRepository).save(captor.capture());
+        assertThat(captor.getValue().getCurrency()).isEqualTo("EUR");
+        assertThat(response.balance()).isEqualByComparingTo("15.50");
+        assertThat(response.alreadyProcessed()).isFalse();
     }
 
     private BankAccount account(

@@ -2,6 +2,8 @@ package com.ahmedkh.banking.account.controller;
 
 import com.ahmedkh.banking.account.dto.InternalAccountResponse;
 import com.ahmedkh.banking.account.dto.InternalAmountRequest;
+import com.ahmedkh.banking.account.dto.InternalExternalCreditRequest;
+import com.ahmedkh.banking.account.dto.InternalExternalCreditResponse;
 import com.ahmedkh.banking.account.service.AccountService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -52,5 +54,12 @@ public class InternalAccountController {
             @Valid @RequestBody InternalAmountRequest request
     ) {
         return service.release(id, request.amount(), request.currency());
+    }
+
+    @PostMapping("/external-credit")
+    public InternalExternalCreditResponse creditExternal(
+            @Valid @RequestBody InternalExternalCreditRequest request
+    ) {
+        return service.creditExternal(request);
     }
 }
