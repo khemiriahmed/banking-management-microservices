@@ -178,4 +178,55 @@
 
     <p *ngIf="transfers.length === 0">Aucun virement enregistre.</p>
   </section>
+
+  <section class="card" *ngIf="authenticated">
+    <div class="section-header">
+      <h2>Historique transactions</h2>
+      <button type="button" (click)="loadTransactions()">Actualiser</button>
+    </div>
+
+    <form class="inline-form" (ngSubmit)="loadTransactions()">
+      <label>
+        Compte
+        <select name="transactionAccount" [(ngModel)]="selectedTransactionAccountId">
+          <option value="">Tous mes comptes</option>
+          <option *ngFor="let account of accounts" [value]="account.id">
+            {{ account.accountNumberMasked }} - {{ account.currency }}
+          </option>
+        </select>
+      </label>
+      <button type="submit">Filtrer</button>
+    </form>
+
+    <table *ngIf="transactions.length > 0">
+      <thead>
+        <tr>
+          <th>Reference externe</th>
+          <th>Type</th>
+          <th>Montant</th>
+          <th>Statut</th>
+          <th>Date</th>
+          <th>Ecritures</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let transaction of transactions">
+          <td>{{ transaction.externalReference }}</td>
+          <td>{{ transaction.type }}</td>
+          <td>{{ transaction.amount }} {{ transaction.currency }}</td>
+          <td>{{ transaction.status }}</td>
+          <td>{{ transaction.occurredAt }}</td>
+          <td>
+            <div *ngFor="let entry of transaction.entries">
+              {{ entry.side }} -
+              {{ entry.accountId ? ('compte ' + entry.accountId) : entry.destinationReference }}
+              - {{ entry.amount }} {{ entry.currency }}
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p *ngIf="transactions.length === 0">Aucune transaction enregistree.</p>
+  </section>
 </main>

@@ -88,6 +88,16 @@ describe('AppComponent', () => {
       last: true
     });
 
+    const transactionsRequest = httpController.expectOne('/transactions');
+    expect(transactionsRequest.request.method).toBe('GET');
+    transactionsRequest.flush({
+      content: [],
+      number: 0,
+      size: 20,
+      totalElements: 0,
+      totalPages: 0
+    });
+
     expect(component.authenticated).toBeTrue();
     expect(component.accounts.length).toBe(1);
     expect(component.beneficiaries.length).toBe(1);
@@ -173,9 +183,51 @@ describe('AppComponent', () => {
       last: true
     });
 
+    const transactionRequest = httpController.expectOne('/transactions');
+    expect(transactionRequest.request.method).toBe('GET');
+    transactionRequest.flush({
+      content: [],
+      number: 0,
+      size: 20,
+      totalElements: 0,
+      totalPages: 0
+    });
+
     expect(component.transfers.length).toBe(1);
     expect(component.transferAmount).toBeNull();
     expect(component.transferReason).toBe('');
+  });
+
+  it('loads transactions for the selected account', () => {
+    localStorage.setItem('banking-access-token', 'test-token');
+    component.selectedTransactionAccountId = 'e4d4f0c8-0b1e-4f6a-9e7a-1b6f0f8d6c11';
+
+    component.loadTransactions();
+
+    const request = httpController.expectOne(
+      '/transactions?accountId=e4d4f0c8-0b1e-4f6a-9e7a-1b6f0f8d6c11'
+    );
+    expect(request.request.method).toBe('GET');
+    request.flush({
+      content: [{
+        id: 'b6d1b1c2-3d4e-5f60-7a81-92b3c4d5e6f7',
+        externalReference: 'transfer:a6d1b1c2-3d4e-5f60-7a81-92b3c4d5e6f7',
+        transferId: 'a6d1b1c2-3d4e-5f60-7a81-92b3c4d5e6f7',
+        type: 'TRANSFER',
+        amount: 12.5,
+        currency: 'EUR',
+        occurredAt: '2026-01-01T10:00:00Z',
+        status: 'CONFIRMED',
+        entries: []
+      }],
+      number: 0,
+      size: 20,
+      totalElements: 1,
+      totalPages: 1
+    });
+
+    expect(component.transactions.length).toBe(1);
+    expect(component.transactions[0].type).toBe('TRANSFER');
   });
 
   it('clears the session on logout', () => {
@@ -187,7 +239,9 @@ describe('AppComponent', () => {
     expect(component.accounts.length).toBe(0);
     expect(component.beneficiaries.length).toBe(0);
     expect(component.transfers.length).toBe(0);
+    expect(component.transactions.length).toBe(0);
     expect(component.selectedSourceAccountId).toBe('');
+    expect(component.selectedTransactionAccountId).toBe('');
     expect(localStorage.getItem('banking-access-token')).toBeNull();
   });
 });
