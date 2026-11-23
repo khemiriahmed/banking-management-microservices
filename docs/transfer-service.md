@@ -10,6 +10,7 @@ Port : `8085` (direct) / `8080/transfers/**` via l'API Gateway. Base dédiée : 
 - Garantir l'idempotence par `(ownerUserId, Idempotency-Key)` : même clé et même corps renvoient la même réponse ; même clé avec un corps différent renvoie `409`.
 - Conserver chaque transition de statut dans `transfer_status_history`.
 - Appeler `account-service` uniquement sur le réseau interne via `X-Internal-Service-Token` ; ces routes ne sont pas exposées par le Gateway.
+- Notifier `transaction-service` après un virement confirmé (`TRANSFER`) et après une compensation source réussie (`REVERSAL`), de manière idempotente ; l'échec de notification est journalisé sans invalider le virement déjà tracé.
 
 ## Migration et modèle
 
@@ -74,6 +75,9 @@ Codes d'erreur JSON : `400` validation/montant/en-tête invalide, `401` JWT abse
 | `ACCOUNT_READ_TIMEOUT_MS` | Timeout de lecture | `3000` |
 | `ACCOUNT_RETRY_ATTEMPTS` | Tentatives sur les `GET` | `2` |
 | `ACCOUNT_RETRY_DELAY_MS` | Délai entre tentatives | `100` |
+| `TRANSACTION_SERVICE_URL` | Base URL interne de `transaction-service` | `http://transaction-service:8086` |
+| `TRANSACTION_CONNECT_TIMEOUT_MS` | Timeout de connexion transaction | `2000` |
+| `TRANSACTION_READ_TIMEOUT_MS` | Timeout de lecture transaction | `3000` |
 | `CONFIG_SERVER_URL` | Config Server | `http://config-server:8888` |
 | `EUREKA_URI` | Eureka | `http://discovery-server:8761/eureka/` |
 
@@ -83,7 +87,7 @@ Codes d'erreur JSON : `400` validation/montant/en-tête invalide, `401` JWT abse
 $env:JAVA_HOME='C:\Users\Ahmed\AppData\Local\Temp\opencode\toolchain\jdk-17.0.21+9'; $env:PATH="$env:JAVA_HOME\bin;C:\Users\Ahmed\AppData\Local\Temp\opencode\toolchain\apache-maven-3.9.16\bin;$env:PATH"; mvn -B -f backend/transfer-service/pom.xml test
 ```
 
-23 tests verts : orchestration Saga et compensations, idempotence et conflits, retry HTTP sans rejeu des mutations, intégration MockMvc/H2/Flyway, sécurité JWT, validation des entrées. Les 28 tests de `account-service` couvrent le crédit externe idempotent. Les 8 tests Angular couvrent le formulaire de virement et l'en-tête `Idempotency-Key`.
+24 tests verts : orchestration Saga et compensations, idempotence et conflits, retry HTTP sans rejeu des mutations, client HTTP transaction, intégration MockMvc/H2/Flyway, sécurité JWT, validation des entrées. Les 28 tests de `account-service` couvrent le crédit externe idempotent. Les 9 tests Angular couvrent le formulaire de virement, l'en-tête `Idempotency-Key` et l'historique transactions.
 
 ## Validation Docker
 
