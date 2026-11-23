@@ -43,6 +43,9 @@ class TransferOrchestratorTest {
     private TransactionServiceClient transactionClient;
 
     @Mock
+    private TransferEventPublisher eventPublisher;
+
+    @Mock
     private TransferRepository transferRepository;
 
     @Mock
@@ -53,7 +56,7 @@ class TransferOrchestratorTest {
     @BeforeEach
     void setUp() {
         orchestrator = new TransferOrchestrator(
-                client, transactionClient, transferRepository, historyRepository
+                client, transactionClient, eventPublisher, transferRepository, historyRepository
         );
     }
 
