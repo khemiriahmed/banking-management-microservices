@@ -10,6 +10,8 @@ import com.ahmedkh.banking.transfer.exception.InvalidTransferStateException;
 import com.ahmedkh.banking.transfer.exception.TransferBusinessException;
 import com.ahmedkh.banking.transfer.repository.TransferRepository;
 import com.ahmedkh.banking.transfer.repository.TransferStatusHistoryRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -18,16 +20,21 @@ import java.util.UUID;
 @Component
 public class TransferOrchestrator {
 
+    private static final Logger logger = LoggerFactory.getLogger(TransferOrchestrator.class);
+
     private final AccountServiceClient client;
+    private final TransactionServiceClient transactionClient;
     private final TransferRepository transferRepository;
     private final TransferStatusHistoryRepository historyRepository;
 
     public TransferOrchestrator(
             AccountServiceClient client,
+            TransactionServiceClient transactionClient,
             TransferRepository transferRepository,
             TransferStatusHistoryRepository historyRepository
     ) {
         this.client = client;
+        this.transactionClient = transactionClient;
         this.transferRepository = transferRepository;
         this.historyRepository = historyRepository;
     }
@@ -83,6 +90,7 @@ public class TransferOrchestrator {
 
         transfer.setCompensationStatus(CompensationStatus.NOT_REQUIRED);
         transition(transfer, TransferStatus.COMPLETED, "Source debited and destination credited");
+        recordCompletedTransaction(transfer);
     }
 
     private void compensateRelease(Transfer transfer, RuntimeException cause) {
@@ -107,6 +115,7 @@ public class TransferOrchestrator {
         try {
             client.creditSource(transfer.getSourceAccountId(), transfer.getAmount(), transfer.getCurrency());
             transfer.setCompensationStatus(CompensationStatus.COMPLETED);
+            recordReversalTransaction(transfer);
             compensation = "source credited back";
         } catch (RuntimeException compensationFailure) {
             transfer.setCompensationStatus(CompensationStatus.FAILED);
@@ -138,6 +147,30 @@ public class TransferOrchestrator {
                 reason == null ? null : truncate(reason),
                 Instant.now()
         ));
+    }
+
+    private void recordCompletedTransaction(Transfer transfer) {
+        try {
+            transactionClient.recordCompletedTransfer(transfer);
+        } catch (RuntimeException exception) {
+            logger.warn(
+                    "Unable to record completed transfer {} in transaction service: {}",
+                    transfer.getId(),
+                    safeMessage(exception)
+            );
+        }
+    }
+
+    private void recordReversalTransaction(Transfer transfer) {
+        try {
+            transactionClient.recordReversal(transfer);
+        } catch (RuntimeException exception) {
+            logger.warn(
+                    "Unable to record reversal for transfer {} in transaction service: {}",
+                    transfer.getId(),
+                    safeMessage(exception)
+            );
+        }
     }
 
     private String safeMessage(RuntimeException exception) {

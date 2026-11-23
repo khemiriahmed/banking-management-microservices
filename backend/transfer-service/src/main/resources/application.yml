@@ -35,6 +35,11 @@ app:
     read-timeout-ms: ${ACCOUNT_READ_TIMEOUT_MS:3000}
     retry-attempts: ${ACCOUNT_RETRY_ATTEMPTS:2}
     retry-delay-ms: ${ACCOUNT_RETRY_DELAY_MS:100}
+  transaction-service:
+    base-url: ${TRANSACTION_SERVICE_URL:http://localhost:8086}
+    internal-token: ${INTERNAL_SERVICE_TOKEN}
+    connect-timeout-ms: ${TRANSACTION_CONNECT_TIMEOUT_MS:2000}
+    read-timeout-ms: ${TRANSACTION_READ_TIMEOUT_MS:3000}
 
 management:
   endpoints:

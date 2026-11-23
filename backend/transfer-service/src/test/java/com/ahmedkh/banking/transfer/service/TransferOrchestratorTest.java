@@ -40,6 +40,9 @@ class TransferOrchestratorTest {
     private AccountServiceClient client;
 
     @Mock
+    private TransactionServiceClient transactionClient;
+
+    @Mock
     private TransferRepository transferRepository;
 
     @Mock
@@ -49,7 +52,9 @@ class TransferOrchestratorTest {
 
     @BeforeEach
     void setUp() {
-        orchestrator = new TransferOrchestrator(client, transferRepository, historyRepository);
+        orchestrator = new TransferOrchestrator(
+                client, transactionClient, transferRepository, historyRepository
+        );
     }
 
     @Test
@@ -72,6 +77,7 @@ class TransferOrchestratorTest {
         );
         verify(client, never()).release(any(), any(), any());
         verify(client, never()).creditSource(any(), any(), any());
+        verify(transactionClient).recordCompletedTransfer(transfer);
         assertHistory(TransferStatus.VALIDATING, TransferStatus.PROCESSING, TransferStatus.COMPLETED);
     }
 
@@ -153,6 +159,7 @@ class TransferOrchestratorTest {
         assertThat(transfer.getFailureReason()).contains("destination unavailable", "source credited back");
         verify(client).creditSource(transfer.getSourceAccountId(), transfer.getAmount(), transfer.getCurrency());
         verify(client, never()).release(any(), any(), any());
+        verify(transactionClient).recordReversal(transfer);
     }
 
     @Test
