@@ -3,6 +3,8 @@ import { Account } from './account.model';
 import { AccountService } from './account.service';
 import { Beneficiary } from './beneficiary.model';
 import { BeneficiaryService } from './beneficiary.service';
+import { Transfer } from './transfer.model';
+import { TransferService } from './transfer.service';
 import { AuthService } from './auth.service';
 
 @Component({
@@ -17,13 +19,20 @@ export class AppComponent {
   beneficiaries: Beneficiary[] = [];
   beneficiaryName = '';
   beneficiaryReference = '';
+  transfers: Transfer[] = [];
+  selectedSourceAccountId = '';
+  selectedBeneficiaryId = '';
+  transferAmount: number | null = null;
+  transferCurrency = 'EUR';
+  transferReason = '';
   errorMessage = '';
   isLoading = false;
 
   constructor(
     private readonly auth: AuthService,
     private readonly accountService: AccountService,
-    private readonly beneficiaryService: BeneficiaryService
+    private readonly beneficiaryService: BeneficiaryService,
+    private readonly transferService: TransferService
   ) {}
 
   get authenticated(): boolean {
@@ -39,6 +48,7 @@ export class AppComponent {
         this.password = '';
         this.loadAccounts();
         this.loadBeneficiaries();
+        this.loadTransfers();
       },
       error: () => {
         this.isLoading = false;
@@ -58,6 +68,10 @@ export class AppComponent {
     this.accountService.getAccounts().subscribe({
       next: (accounts) => {
         this.accounts = accounts;
+        if (!this.selectedSourceAccountId && accounts.length > 0) {
+          this.selectedSourceAccountId = accounts[0].id;
+          this.transferCurrency = accounts[0].currency;
+        }
         this.isLoading = false;
       },
       error: () => {
@@ -76,10 +90,59 @@ export class AppComponent {
     this.beneficiaryService.getBeneficiaries().subscribe({
       next: (beneficiaries) => {
         this.beneficiaries = beneficiaries;
+        if (!this.selectedBeneficiaryId && beneficiaries.length > 0) {
+          this.selectedBeneficiaryId = beneficiaries[0].id;
+        }
       },
       error: () => {
         this.beneficiaries = [];
         this.errorMessage = 'Impossible de charger les beneficiaires.';
+      }
+    });
+  }
+
+  loadTransfers(): void {
+    if (!this.authenticated) {
+      return;
+    }
+    this.errorMessage = '';
+    this.transferService.getTransfers().subscribe({
+      next: (page) => {
+        this.transfers = page.content;
+      },
+      error: () => {
+        this.transfers = [];
+        this.errorMessage = 'Impossible de charger les virements.';
+      }
+    });
+  }
+
+  createTransfer(): void {
+    if (
+      !this.authenticated ||
+      !this.selectedSourceAccountId ||
+      !this.selectedBeneficiaryId ||
+      !this.transferAmount ||
+      this.transferAmount <= 0
+    ) {
+      this.errorMessage = 'Renseignez un compte, un beneficiaire et un montant valide.';
+      return;
+    }
+    this.errorMessage = '';
+    this.transferService.createTransfer({
+      sourceAccountId: this.selectedSourceAccountId,
+      beneficiaryId: this.selectedBeneficiaryId,
+      amount: this.transferAmount,
+      currency: this.transferCurrency,
+      reason: this.transferReason.trim() || undefined
+    }, this.newIdempotencyKey()).subscribe({
+      next: () => {
+        this.transferAmount = null;
+        this.transferReason = '';
+        this.loadTransfers();
+      },
+      error: () => {
+        this.errorMessage = 'Impossible de creer le virement.';
       }
     });
   }
@@ -134,7 +197,20 @@ export class AppComponent {
     this.beneficiaries = [];
     this.beneficiaryName = '';
     this.beneficiaryReference = '';
+    this.transfers = [];
+    this.selectedSourceAccountId = '';
+    this.selectedBeneficiaryId = '';
+    this.transferAmount = null;
+    this.transferCurrency = 'EUR';
+    this.transferReason = '';
     this.errorMessage = '';
     this.isLoading = false;
+  }
+
+  private newIdempotencyKey(): string {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    return `transfer-${Date.now()}-${Math.random().toString(16).slice(2)}`;
   }
 }

@@ -42,7 +42,8 @@ label {
   font-weight: 600;
 }
 
-input {
+input,
+select {
   padding: 10px 12px;
   border: 1px solid #c8d0df;
   border-radius: 8px;
@@ -105,8 +106,16 @@ th {
   color: #9b1c1c;
 }
 
-.beneficiary-card {
+.beneficiary-card,
+.transfer-card {
   margin-top: 24px;
+}
+
+.failure {
+  display: block;
+  margin-top: 4px;
+  color: #9b1c1c;
+  font-size: 0.8rem;
 }
 
 .actions {
