@@ -1,4 +1,4 @@
-# Ports et services — Sprint 7 + frontend
+# Ports et services - Sprint 8/9 + frontend
 
 ## Versions retenues
 
@@ -59,7 +59,7 @@ docker compose -f infrastructure/docker-compose.yml --env-file infrastructure/.e
 
 `docker compose down` arrête tout ; ajouter `-v` supprime également les volumes `postgres-auth-data`, `postgres-user-data`, `postgres-account-data`, `postgres-transfer-data` et `postgres-transaction-data`.
 
-## Vérifications Sprint 2, Sprint 3, Sprint 4, Sprint 5, Sprint 6 et Sprint 7
+## Verifications Sprint 2-8 et etat Sprint 9
 
 | Vérification | Commande / URL | Résultat attendu |
 | --- | --- | --- |
@@ -119,3 +119,6 @@ docker compose -f infrastructure/docker-compose.yml --env-file infrastructure/.e
 | Virement confirmé | `POST /transfers` réussi | transaction `TRANSFER`/`CONFIRMED` visible dans `/transactions` |
 
 Les vérifications ont été exécutées avec succès dans Docker les 21/11/2026, 22/11/2026 et 23/11/2026. Le 23/11/2026, la plateforme compte 15 conteneurs `Up` (14 healthy + `demo-service`), les tables `transfers`, `transfer_status_history`, `external_accounts`, `external_account_credits`, `transaction_records` et `transaction_entries` sont présentes, les routes Gateway `transfer-service`/`transaction-service` et les enregistrements Eureka `TRANSFER-SERVICE`/`TRANSACTION-SERVICE` sont actifs. Parcours validés via `http://localhost:8080` : virement réussi `201`/`COMPLETED` avec transaction `TRANSFER` confirmée, replay idempotent même clé `201` même identifiant, conflit de clé `409`, solde insuffisant `FAILED`, bénéficiaire inactif `FAILED`, échec de crédit avec compensation `COMPLETED` et `REVERSAL` enregistrée, historique transactions filtré par compte/pagination `200`, détail autre client `404`, doublon interne même `externalReference` sans duplication. Frontend `200` et proxy `/transactions` sans token `401`. Détails : [auth-service.md](auth-service.md), [user-service.md](user-service.md), [account-service.md](account-service.md), [transfer-service.md](transfer-service.md) et [transaction-service.md](transaction-service.md).
+
+
+Sprint 9 (frontend, 24/11/2026) : Angular refactorise (routing/guards/interceptor/pages CLIENT+ADMIN), /notifications ajoute aux proxys frontend/nginx et proxy.conf, ng test --watch=false --browsers=ChromeHeadlessNoSandbox 2/2 SUCCESS, ng build --configuration production OK. Validation Docker E2E complete non executee car Docker Desktop daemon indisponible lors de docker compose build frontend.
