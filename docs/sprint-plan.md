@@ -152,3 +152,14 @@ Aucun sprint suivant ne démarre tant que les critères de validation du sprint 
 - [x] 8.4 ??" `transfer-service` : publication `TransferCompleted` (`banking.transfer.completed`) / `TransferFailed` (`banking.transfer.failed`) avec contrat `TransferEvent(eventId,eventType,occurredAt,payload)` ; publication tol?rante aux erreurs sans invalider le transfert.
 - [x] 8.5 ??" Gateway/config/compose : routes `/notifications/**` ??' `lb://NOTIFICATION-SERVICE`, `/admin/audit/**` ??' `lb://AUDIT-SERVICE`, `/users/**,/admin/users/**` ??' `lb://USER-SERVICE` ; variables RabbitMQ/Postgres ajout?es.
 - [x] 8.6 ??" Tests : notification-service 3/3, audit-service 3/3, transfer-service 25/25 ; validation Docker (services healthy, routes gateway, 401 sans token).
+
+## Détail du Sprint 9 (en cours)
+
+- [x] 9.1 — Frontend Angular refactoré : routing, layout, guards auth/rôle, interceptor JWT, services core, pages auth/dashboard/comptes/bénéficiaires/virements/transactions/notifications/admin.
+- [x] 9.2 — Parcours CLIENT : login/register, dashboard, comptes, bénéficiaires, virement, historique transactions, notifications (liste + marquer lu).
+- [x] 9.3 — Parcours ADMIN : accès admin protégé par rôle, consultation utilisateurs et audit via Gateway.
+- [x] 9.4 — Intégration Gateway : `/notifications` ajouté à `frontend/proxy.conf.json` et `frontend/nginx.conf`; routes existantes réutilisées.
+- [x] 9.5 — Tests/build frontend : `ng test --watch=false --browsers=ChromeHeadlessNoSandbox` 2/2 SUCCESS ; `ng build --configuration production` OK.
+- [ ] 9.6 — Validation Docker E2E complète Sprint 9 : daemon Docker indisponible lors de `docker compose build frontend`; à exécuter quand Docker Desktop est disponible.
+
+Branche dédiée : `sprint/09-angular-frontend`, conservée après merge dans `develop`.
