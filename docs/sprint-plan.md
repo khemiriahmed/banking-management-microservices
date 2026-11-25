@@ -163,3 +163,11 @@ Aucun sprint suivant ne démarre tant que les critères de validation du sprint 
 - [ ] 9.6 — Validation Docker E2E complète Sprint 9 : daemon Docker indisponible lors de `docker compose build frontend`; à exécuter quand Docker Desktop est disponible.
 
 Branche dédiée : `sprint/09-angular-frontend`, conservée après merge dans `develop`.
+
+## Détail du Sprint 10 (préparation)
+
+- [x] 10.1 — Validation statique du Compose avec .env.example (docker compose config --quiet OK).
+- [x] 10.2 — Script scripts/verify-docker.ps1 : up -d --build, attente healthchecks, contrôle routes Gateway et health endpoints.
+- [ ] 10.3 — Exécution E2E Docker complète (en attente de Docker Desktop) puis correction éventuelle des variables/comptes/services.
+
+Branche dédiée : sprint/10-docker-integration, conservée après merge dans develop.
