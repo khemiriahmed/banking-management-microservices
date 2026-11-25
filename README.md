@@ -108,7 +108,7 @@ Détails des services et vérifications : [docs/ports-and-services.md](docs/port
 
 ## Sprints
 
-Feuille de route détaillée : [docs/sprint-plan.md](docs/sprint-plan.md). Statut actuel : **Sprints 0 à 11 terminés, Sprint 12 AWS à démarrer**.
+Feuille de route détaillée : [docs/sprint-plan.md](docs/sprint-plan.md). Statut actuel : **Sprints 0 à 12 terminés** (projet pédagogique complet).
 
 ## CI et documentation API
 
@@ -117,6 +117,10 @@ Feuille de route détaillée : [docs/sprint-plan.md](docs/sprint-plan.md). Statu
 - OpenAPI : chaque service expose `/swagger-ui.html` et `/v3/api-docs` ; détails dans [docs/openapi.md](docs/openapi.md).
 - Vérification Docker : `powershell -File scripts/verify-docker.ps1` après démarrage de Docker Desktop.
 
+## Démo AWS
+
+La démonstration cloud est documentée dans [docs/aws-deployment.md](docs/aws-deployment.md) : IAM/MFA, Budgets, VPC privé, ECR, EC2 + Docker Compose, RDS optionnel, CloudWatch et coût estimatif. Les ressources AWS ne sont pas créées automatiquement et aucun secret n'est versionné.
+
 ## Sécurité et qualité
 
 - Frontend jamais source de vérité pour rôles, propriété d'un compte ou montant.
@@ -124,4 +128,4 @@ Feuille de route détaillée : [docs/sprint-plan.md](docs/sprint-plan.md). Statu
 - Aucune base partagée entre services, aucun secret commité, aucun token dans les logs.
 - `BigDecimal` uniquement pour l'argent, Saga + idempotence pour les virements.
 
-Voir aussi : [architecture](docs/architecture-overview.md) · [ports et services](docs/ports-and-services.md) · [OpenAPI](docs/openapi.md) · [workflow Git](docs/git-workflow.md) · [auth service](docs/auth-service.md) · [user service](docs/user-service.md) · [account service](docs/account-service.md) · [transfer service](docs/transfer-service.md) · [transaction service](docs/transaction-service.md) · [notification service](docs/notification-service.md) · [audit service](docs/audit-service.md) · [cahier des charges PDF](docs/Cahier_des_charges_Banking_Microservices_AhmedKH_v2_Sprints_Detailles.pdf).
+Voir aussi : [architecture](docs/architecture-overview.md) · [ports et services](docs/ports-and-services.md) · [OpenAPI](docs/openapi.md) · [déploiement AWS](docs/aws-deployment.md) · [workflow Git](docs/git-workflow.md) · [auth service](docs/auth-service.md) · [user service](docs/user-service.md) · [account service](docs/account-service.md) · [transfer service](docs/transfer-service.md) · [transaction service](docs/transaction-service.md) · [notification service](docs/notification-service.md) · [audit service](docs/audit-service.md) · [cahier des charges PDF](docs/Cahier_des_charges_Banking_Microservices_AhmedKH_v2_Sprints_Detailles.pdf).

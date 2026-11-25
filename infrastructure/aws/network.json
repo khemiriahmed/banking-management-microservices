@@ -1,0 +1,218 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Non-sensitive network baseline for the banking demo",
+  "Parameters": {
+    "Environment": {
+      "Type": "String",
+      "Default": "demo",
+      "AllowedValues": ["demo", "dev"]
+    },
+    "AllowedSshCidr": {
+      "Type": "String",
+      "Default": "127.0.0.1/32",
+      "Description": "Single admin IP allowed to reach EC2 over SSH"
+    }
+  },
+  "Resources": {
+    "Vpc": {
+      "Type": "AWS::EC2::VPC",
+      "Properties": {
+        "CidrBlock": "10.20.0.0/16",
+        "EnableDnsSupport": true,
+        "EnableDnsHostnames": true,
+        "Tags": [
+          { "Key": "Name", "Value": { "Fn::Sub": "banking-${Environment}-vpc" } },
+          { "Key": "Project", "Value": "banking-demo" }
+        ]
+      }
+    },
+    "InternetGateway": {
+      "Type": "AWS::EC2::InternetGateway",
+      "Properties": {
+        "Tags": [
+          { "Key": "Name", "Value": { "Fn::Sub": "banking-${Environment}-igw" } },
+          { "Key": "Project", "Value": "banking-demo" }
+        ]
+      }
+    },
+    "GatewayAttachment": {
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+      "Properties": {
+        "VpcId": { "Ref": "Vpc" },
+        "InternetGatewayId": { "Ref": "InternetGateway" }
+      }
+    },
+    "PublicSubnet": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": { "Ref": "Vpc" },
+        "CidrBlock": "10.20.1.0/24",
+        "MapPublicIpOnLaunch": true,
+        "AvailabilityZone": { "Fn::Select": [0, { "Fn::GetAZs": "" }] },
+        "Tags": [
+          { "Key": "Name", "Value": { "Fn::Sub": "banking-${Environment}-public" } },
+          { "Key": "Project", "Value": "banking-demo" }
+        ]
+      }
+    },
+    "PrivateSubnet": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": { "Ref": "Vpc" },
+        "CidrBlock": "10.20.2.0/24",
+        "MapPublicIpOnLaunch": false,
+        "AvailabilityZone": { "Fn::Select": [0, { "Fn::GetAZs": "" }] },
+        "Tags": [
+          { "Key": "Name", "Value": { "Fn::Sub": "banking-${Environment}-private" } },
+          { "Key": "Project", "Value": "banking-demo" }
+        ]
+      }
+    },
+    "PublicRouteTable": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "VpcId": { "Ref": "Vpc" },
+        "Tags": [
+          { "Key": "Name", "Value": { "Fn::Sub": "banking-${Environment}-public-rt" } },
+          { "Key": "Project", "Value": "banking-demo" }
+        ]
+      }
+    },
+    "PublicRoute": {
+      "Type": "AWS::EC2::Route",
+      "DependsOn": "GatewayAttachment",
+      "Properties": {
+        "RouteTableId": { "Ref": "PublicRouteTable" },
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": { "Ref": "InternetGateway" }
+      }
+    },
+    "PublicSubnetAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "SubnetId": { "Ref": "PublicSubnet" },
+        "RouteTableId": { "Ref": "PublicRouteTable" }
+      }
+    },
+    "PrivateRouteTable": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "VpcId": { "Ref": "Vpc" },
+        "Tags": [
+          { "Key": "Name", "Value": { "Fn::Sub": "banking-${Environment}-private-rt" } },
+          { "Key": "Project", "Value": "banking-demo" }
+        ]
+      }
+    },
+    "PrivateSubnetAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "SubnetId": { "Ref": "PrivateSubnet" },
+        "RouteTableId": { "Ref": "PrivateRouteTable" }
+      }
+    },
+    "AlbSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Public HTTPS entry point for the banking demo",
+        "VpcId": { "Ref": "Vpc" },
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 443,
+            "ToPort": 443,
+            "CidrIp": "0.0.0.0/0"
+          }
+        ],
+        "SecurityGroupEgress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 4200,
+            "ToPort": 4200,
+            "CidrIp": "10.20.1.0/24"
+          }
+        ],
+        "Tags": [
+          { "Key": "Name", "Value": { "Fn::Sub": "banking-${Environment}-alb-sg" } },
+          { "Key": "Project", "Value": "banking-demo" }
+        ]
+      }
+    },
+    "AppSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "EC2 Docker Compose workloads for the banking demo",
+        "VpcId": { "Ref": "Vpc" },
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 4200,
+            "ToPort": 4200,
+            "SourceSecurityGroupId": { "Ref": "AlbSecurityGroup" }
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 8080,
+            "ToPort": 8080,
+            "SourceSecurityGroupId": { "Ref": "AlbSecurityGroup" }
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 22,
+            "ToPort": 22,
+            "CidrIp": { "Ref": "AllowedSshCidr" }
+          }
+        ],
+        "SecurityGroupEgress": [
+          {
+            "IpProtocol": "-1",
+            "CidrIp": "0.0.0.0/0"
+          }
+        ],
+        "Tags": [
+          { "Key": "Name", "Value": { "Fn::Sub": "banking-${Environment}-app-sg" } },
+          { "Key": "Project", "Value": "banking-demo" }
+        ]
+      }
+    },
+    "DbSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Private PostgreSQL access for banking demo services",
+        "VpcId": { "Ref": "Vpc" },
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 5432,
+            "ToPort": 5432,
+            "SourceSecurityGroupId": { "Ref": "AppSecurityGroup" }
+          }
+        ],
+        "Tags": [
+          { "Key": "Name", "Value": { "Fn::Sub": "banking-${Environment}-db-sg" } },
+          { "Key": "Project", "Value": "banking-demo" }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "VpcId": {
+      "Value": { "Ref": "Vpc" }
+    },
+    "PublicSubnetId": {
+      "Value": { "Ref": "PublicSubnet" }
+    },
+    "PrivateSubnetId": {
+      "Value": { "Ref": "PrivateSubnet" }
+    },
+    "AlbSecurityGroupId": {
+      "Value": { "Ref": "AlbSecurityGroup" }
+    },
+    "AppSecurityGroupId": {
+      "Value": { "Ref": "AppSecurityGroup" }
+    },
+    "DbSecurityGroupId": {
+      "Value": { "Ref": "DbSecurityGroup" }
+    }
+  }
+}

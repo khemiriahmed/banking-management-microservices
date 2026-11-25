@@ -16,7 +16,7 @@ Objectif : un sprint traité par jour ouvré. Les sprints longs du cahier des ch
 | J11-12 | 9 — Angular | Parcours CLIENT et ADMIN complets | APIs stables | Terminé |
 | J13 | 10 — Docker | `docker compose up --build` | S9 | Terminé (E2E en attente Docker Desktop) |
 | J14 | 11 — CI/CD | GitHub Actions, OpenAPI, README final | S10 | Terminé |
-| J15 | 12 — AWS | Démo sécurisée, coûts documentés | S11 | À faire |
+| J15 | 12 — AWS | Démo sécurisée, coûts documentés | S11 | Terminé |
 
 ## Détail du Sprint 0 (terminé)
 
@@ -182,3 +182,15 @@ Branche dédiée : sprint/10-docker-integration, conservée après merge dans de
 - [x] 11.6 — Équivalent CI exécuté localement : 11 builds Maven verts, build Angular OK, 2 tests Angular verts, YAML et Compose valides ; exécution GitHub et E2E Docker à confirmer après push.
 
 Branche dédiée : `sprint/11-cicd-openapi`, conservée après merge dans `develop`.
+
+## Détail du Sprint 12 (terminé)
+
+- [x] 12.1 — Sécurité compte : MFA, utilisateur IAM dédié avec permissions minimales, budgets 10/20 USD et alertes sans secret versionné.
+- [x] 12.2 — Réseau : CloudFormation non sensible `infrastructure/aws/network.json` avec VPC, sous-réseau public, sous-réseau privé, IGW, routes et security groups ; DB jamais publique.
+- [x] 12.3 — Images : script `infrastructure/aws/ecr-push.ps1` pour les 12 dépôts ECR `banking/*` avec tag version/commit et `latest`.
+- [x] 12.4 — Démo EC2 + Docker Compose derrière ALB/HTTPS, Gateway comme point d'entrée public et limites de la configuration documentées.
+- [x] 12.5 — Base et observabilité : RDS PostgreSQL privé optionnel, CloudWatch Logs/alertes et S3 optionnel avec Block Public Access.
+- [x] 12.6 — Documentation [aws-deployment.md](aws-deployment.md) : validation HTTPS/auth/santé/DB, comptes fictifs `.invalid`, coût estimatif 52-76 USD/mois et procédure de nettoyage.
+- [ ] 12.7 — Déploiement AWS réel et captures : nécessite un compte AWS, un domaine et des secrets fournis par l'utilisateur ; aucune ressource payante n'est créée par ce sprint.
+
+Branche dédiée : `sprint/12-aws-demo`, conservée après merge dans `develop`.
