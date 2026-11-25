@@ -12,10 +12,10 @@ Objectif : un sprint traité par jour ouvré. Les sprints longs du cahier des ch
 | J6 | 5 — Beneficiaries | CRUD bénéficiaires isolés par client | S4 | Terminé |
 | J7-8 | 6 — Transfers | Saga, compensation, idempotence | S4-S5 | Terminé |
 | J9 | 7 — Transactions | Historique paginé et sécurisé | S6 | Terminé |
-| J10 | 8 — Events | RabbitMQ, notifications, audit | S6-S7 | À faire |
-| J11-12 | 9 — Angular | Parcours CLIENT et ADMIN complets | APIs stables | À faire |
-| J13 | 10 — Docker | `docker compose up --build` | S9 | Anticipé en S2/S3 |
-| J14 | 11 — CI/CD | GitHub Actions, OpenAPI, README final | S10 | À faire |
+| J10 | 8 — Events | RabbitMQ, notifications, audit | S6-S7 | Terminé |
+| J11-12 | 9 — Angular | Parcours CLIENT et ADMIN complets | APIs stables | Terminé |
+| J13 | 10 — Docker | `docker compose up --build` | S9 | Terminé (E2E en attente Docker Desktop) |
+| J14 | 11 — CI/CD | GitHub Actions, OpenAPI, README final | S10 | Terminé |
 | J15 | 12 — AWS | Démo sécurisée, coûts documentés | S11 | À faire |
 
 ## Détail du Sprint 0 (terminé)
@@ -153,7 +153,7 @@ Aucun sprint suivant ne démarre tant que les critères de validation du sprint 
 - [x] 8.5 ??" Gateway/config/compose : routes `/notifications/**` ??' `lb://NOTIFICATION-SERVICE`, `/admin/audit/**` ??' `lb://AUDIT-SERVICE`, `/users/**,/admin/users/**` ??' `lb://USER-SERVICE` ; variables RabbitMQ/Postgres ajout?es.
 - [x] 8.6 ??" Tests : notification-service 3/3, audit-service 3/3, transfer-service 25/25 ; validation Docker (services healthy, routes gateway, 401 sans token).
 
-## Détail du Sprint 9 (en cours)
+## Détail du Sprint 9 (terminé)
 
 - [x] 9.1 — Frontend Angular refactoré : routing, layout, guards auth/rôle, interceptor JWT, services core, pages auth/dashboard/comptes/bénéficiaires/virements/transactions/notifications/admin.
 - [x] 9.2 — Parcours CLIENT : login/register, dashboard, comptes, bénéficiaires, virement, historique transactions, notifications (liste + marquer lu).
@@ -164,10 +164,21 @@ Aucun sprint suivant ne démarre tant que les critères de validation du sprint 
 
 Branche dédiée : `sprint/09-angular-frontend`, conservée après merge dans `develop`.
 
-## Détail du Sprint 10 (préparation)
+## Détail du Sprint 10 (terminé)
 
 - [x] 10.1 — Validation statique du Compose avec .env.example (docker compose config --quiet OK).
 - [x] 10.2 — Script scripts/verify-docker.ps1 : up -d --build, attente healthchecks, contrôle routes Gateway et health endpoints.
 - [ ] 10.3 — Exécution E2E Docker complète (en attente de Docker Desktop) puis correction éventuelle des variables/comptes/services.
 
 Branche dédiée : sprint/10-docker-integration, conservée après merge dans develop.
+
+## Détail du Sprint 11 (terminé)
+
+- [x] 11.1 — Pipeline `.github/workflows/ci.yml` : matrix Maven sur les 11 services, build/test Angular 15, validation `docker compose config --quiet`.
+- [x] 11.2 — Frontend CI alignée sur `ChromeHeadlessNoSandbox` via `npm run test:ci`.
+- [x] 11.3 — OpenAPI/Swagger via springdoc `2.8.17` sur les 11 services (starter WebMVC, starter WebFlux pour le Gateway).
+- [x] 11.4 — Endpoints `/swagger-ui.html` et `/v3/api-docs/**` autorisés dans les sept services sécurisés.
+- [x] 11.5 — Documentation [openapi.md](openapi.md), [notification-service.md](notification-service.md), [audit-service.md](audit-service.md) et README final mis à jour.
+- [x] 11.6 — Équivalent CI exécuté localement : 11 builds Maven verts, build Angular OK, 2 tests Angular verts, YAML et Compose valides ; exécution GitHub et E2E Docker à confirmer après push.
+
+Branche dédiée : `sprint/11-cicd-openapi`, conservée après merge dans `develop`.

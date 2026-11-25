@@ -37,6 +37,8 @@ flowchart TD
     ACC --> DB3[(account_db)]
     TRF --> DB4[(transfer_db)]
     TX --> DB5[(transaction_db)]
+    NOTIF --> DB6[(notification_db)]
+    AUDIT --> DB7[(audit_db)]
 ```
 
 Règles fortes : chaque service a sa propre base, le Gateway n'est pas une couche de sécurité suffisante, les montants utilisent `BigDecimal`, le frontend n'est jamais source de vérité.
@@ -96,7 +98,7 @@ Lancer toute la plateforme avec Docker (mode retenu) :
 
 ```powershell
 copy infrastructure\.env.example infrastructure\.env
-# renseigner AUTH_DB_PASSWORD, USER_DB_PASSWORD, ACCOUNT_DB_PASSWORD, TRANSFER_DB_PASSWORD, TRANSACTION_DB_PASSWORD, JWT_SECRET et INTERNAL_SERVICE_TOKEN
+# renseigner les mots de passe DB, JWT_SECRET, INTERNAL_SERVICE_TOKEN et RABBITMQ_PASSWORD
 docker compose -f infrastructure/docker-compose.yml --env-file infrastructure/.env up -d --build
 ```
 
@@ -106,7 +108,14 @@ Détails des services et vérifications : [docs/ports-and-services.md](docs/port
 
 ## Sprints
 
-Feuille de route détaillée : [docs/sprint-plan.md](docs/sprint-plan.md). Statut actuel : **Sprint 7 terminé, Sprint 8 à démarrer**.
+Feuille de route détaillée : [docs/sprint-plan.md](docs/sprint-plan.md). Statut actuel : **Sprints 0 à 11 terminés, Sprint 12 AWS à démarrer**.
+
+## CI et documentation API
+
+- GitHub Actions : `.github/workflows/ci.yml` compile et teste les 11 services Spring Boot, build/teste le frontend Angular 15 et valide le `docker-compose.yml`.
+- Commandes locales équivalentes : `./mvnw -B -ntp clean verify` dans chaque service, `npm ci && npm run build && npm run test:ci` dans `frontend/`.
+- OpenAPI : chaque service expose `/swagger-ui.html` et `/v3/api-docs` ; détails dans [docs/openapi.md](docs/openapi.md).
+- Vérification Docker : `powershell -File scripts/verify-docker.ps1` après démarrage de Docker Desktop.
 
 ## Sécurité et qualité
 
@@ -115,4 +124,4 @@ Feuille de route détaillée : [docs/sprint-plan.md](docs/sprint-plan.md). Statu
 - Aucune base partagée entre services, aucun secret commité, aucun token dans les logs.
 - `BigDecimal` uniquement pour l'argent, Saga + idempotence pour les virements.
 
-Voir aussi : [architecture](docs/architecture-overview.md) · [ports et services](docs/ports-and-services.md) · [auth service](docs/auth-service.md) · [user service](docs/user-service.md) · [account service](docs/account-service.md) · [transfer service](docs/transfer-service.md) · [transaction service](docs/transaction-service.md) · [cahier des charges PDF](docs/Cahier_des_charges_Banking_Microservices_AhmedKH_v2_Sprints_Detailles.pdf).
+Voir aussi : [architecture](docs/architecture-overview.md) · [ports et services](docs/ports-and-services.md) · [OpenAPI](docs/openapi.md) · [workflow Git](docs/git-workflow.md) · [auth service](docs/auth-service.md) · [user service](docs/user-service.md) · [account service](docs/account-service.md) · [transfer service](docs/transfer-service.md) · [transaction service](docs/transaction-service.md) · [notification service](docs/notification-service.md) · [audit service](docs/audit-service.md) · [cahier des charges PDF](docs/Cahier_des_charges_Banking_Microservices_AhmedKH_v2_Sprints_Detailles.pdf).

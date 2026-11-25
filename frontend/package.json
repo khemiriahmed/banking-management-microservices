@@ -7,7 +7,7 @@
     "start": "ng serve --proxy-config proxy.conf.json",
     "build": "ng build --configuration production",
     "test": "ng test --watch=false --browsers=ChromeHeadless",
-    "test:ci": "ng test --watch=false --browsers=ChromeHeadless --code-coverage"
+    "test:ci": "ng test --watch=false --browsers=ChromeHeadlessNoSandbox --code-coverage"
   },
   "dependencies": {
     "@angular/animations": "15.2.10",
